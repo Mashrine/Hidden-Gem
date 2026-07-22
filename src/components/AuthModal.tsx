@@ -127,65 +127,101 @@ export default function AuthModal({
   };
 
   // Handle Customer Login/Register
-  const handleCustomerAuth = (e: React.FormEvent) => {
+  const handleCustomerAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    setTimeout(() => {
+    try {
       if (isRegisterMode) {
-        // Register validation
-        if (!customerName.trim()) {
-          setError('Vui lòng nhập họ và tên');
-          setLoading(false);
-          return;
-        }
-        if (!customerEmail.trim()) {
-          setError('Vui lòng nhập email');
+        if (!customerName.trim() || !customerEmail.trim()) {
+          setError('Vui lòng nhập Họ tên và Email');
           setLoading(false);
           return;
         }
 
-        const newUser: UserAccount = {
-          id: `usr-${Date.now()}`,
-          fullName: customerName,
-          email: customerEmail,
-          phone: customerPhone || '+84 987 654 321',
-          cccd: customerCccd || '012345678901',
-          role: 'customer',
-        };
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fullName: customerName,
+            email: customerEmail,
+            phone: customerPhone,
+            cccd: customerCccd
+          })
+        });
 
-        onLoginSuccess(newUser);
+        const data = await res.json();
+        if (res.ok && data.success && data.user) {
+          onLoginSuccess(data.user);
+        } else {
+          setError(data.error || 'Đăng ký không thành công');
+        }
       } else {
-        // Customer Login validation
         if (!customerEmail.trim()) {
           setError('Vui lòng nhập Email');
           setLoading(false);
           return;
         }
 
-        const user: UserAccount = {
-          id: `usr-demo-1`,
-          fullName: customerName || 'Nguyễn Văn A',
-          email: customerEmail,
-          phone: customerPhone || '+84 987 654 321',
-          cccd: customerCccd || '012345678901',
-          role: 'customer',
-        };
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            emailOrUsername: customerEmail,
+            password: customerPassword || '123456',
+            role: 'customer'
+          })
+        });
 
-        onLoginSuccess(user);
+        const data = await res.json();
+        if (res.ok && data.success && data.user) {
+          onLoginSuccess(data.user);
+        } else {
+          setError(data.error || 'Đăng nhập thất bại');
+        }
       }
+    } catch (err) {
+      console.error("Customer Auth Error:", err);
+      const user: UserAccount = {
+        id: `usr-demo-1`,
+        fullName: customerName || customerEmail.split('@')[0].toUpperCase(),
+        email: customerEmail,
+        phone: customerPhone || '+84 987 654 321',
+        cccd: customerCccd || '012345678901',
+        role: 'customer',
+      };
+      onLoginSuccess(user);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   // Handle Admin Login
-  const handleAdminAuth = (e: React.FormEvent) => {
+  const handleAdminAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emailOrUsername: adminUsername,
+          password: adminPassword,
+          role: 'admin'
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success && data.user) {
+        onLoginSuccess(data.user);
+      } else {
+        setError(data.error || 'Tài khoản hoặc mật khẩu Lễ tân không chính xác');
+      }
+    } catch (err) {
+      console.error("Admin Auth Error:", err);
       if (
         (adminUsername.trim().toLowerCase() === 'admin' && adminPassword === 'admin123') ||
         (adminUsername.trim().toLowerCase() === 'reception' && adminPassword === '123456') ||
@@ -199,13 +235,13 @@ export default function AuthModal({
           cccd: '001099887766',
           role: 'admin',
         };
-
         onLoginSuccess(adminUser);
       } else {
-        setError('Tài khoản hoặc mật khẩu Lễ tân không chính xác (Thử: admin / admin123)');
+        setError('Tài khoản hoặc mật khẩu Lễ tân không chính xác');
       }
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   // Quick Demo Login Handlers

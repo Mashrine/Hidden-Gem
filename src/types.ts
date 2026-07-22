@@ -30,6 +30,7 @@ export interface Booking {
   paymentMethod: 'vnpay' | 'stripe';
   status: 'pending' | 'pending_payment' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled';
   lockedUntil?: string; // Soft lock expiry timestamp (10 mins)
+  smartLockCode?: string; // 6-digit electronic lock PIN
   aiItinerary?: any; // Stored AI trip itinerary JSON/object
   eta?: string;
   createdAt?: string;

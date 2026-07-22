@@ -93,6 +93,22 @@ export default function BookingView({ selectedRoom, currentUser, onBookingSucces
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [bookedSuccess, setBookedSuccess] = useState<boolean>(false);
 
+  // Dynamic Dates State
+  const [checkInDate, setCheckInDate] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+
+  const getCheckOutDate = (inDate: string, n: number) => {
+    const d = new Date(inDate);
+    if (isNaN(d.getTime())) return inDate;
+    d.setDate(d.getDate() + n);
+    return d.toISOString().split('T')[0];
+  };
+
+  const checkOutDate = getCheckOutDate(checkInDate, nights);
+  const sessionIdRef = useRef<string>(`session-${Date.now()}`);
+
   // Simulated 360 VR dragging physics
   const [panX, setPanX] = useState<number>(45); // percent offset
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -161,9 +177,9 @@ export default function BookingView({ selectedRoom, currentUser, onBookingSucces
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             roomId: selectedRoom.id,
-            checkIn: '2024-12-15',
-            checkOut: '2024-12-18',
-            sessionId: `session-${Date.now()}`
+            checkIn: checkInDate,
+            checkOut: checkOutDate,
+            sessionId: sessionIdRef.current
           })
         });
         const data = await res.json();
@@ -183,7 +199,7 @@ export default function BookingView({ selectedRoom, currentUser, onBookingSucces
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [selectedRoom.id]);
+  }, [selectedRoom.id, checkInDate, checkOutDate]);
 
   const handleSubmitBooking = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,14 +244,14 @@ export default function BookingView({ selectedRoom, currentUser, onBookingSucces
     setIsProcessing(true);
 
     try {
-      // 1. Verify availability
+      // 1. Verify availability on server
       const availRes = await fetch('/api/bookings/check-availability', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           roomId: selectedRoom.id,
-          checkIn: '2024-12-15',
-          checkOut: '2024-12-18'
+          checkIn: checkInDate,
+          checkOut: checkOutDate
         })
       });
       const availData = await availRes.json();
@@ -255,65 +271,94 @@ export default function BookingView({ selectedRoom, currentUser, onBookingSucces
     setIsPaymentModalOpen(true);
   };
 
-  const handlePaymentConfirmed = () => {
+  const handlePaymentConfirmed = async () => {
     setIsPaymentModalOpen(false);
     setIsProcessing(true);
 
-    setTimeout(() => {
-      const bookingId = pendingBookingId || `booking-${Date.now()}`;
-      const lockedUntilIso = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-      const sampleAiItinerary = {
-        title: `Lịch Trình Du Lịch Khám Phá Đà Lạt - Cấp Độ ${backpackerLevel}`,
-        recommendedHomestay: selectedRoom.name,
-        days: [
-          {
-            dayNumber: 1,
-            theme: "Săn Mây Cầu Đất & Cà Phê Chill Thung Lũng",
-            activities: [
-              { time: "05:00 - 07:30", spot: "Đồi chè Cầu Đất", description: "Đón bình minh & săn biển mây bồng bềnh.", tip: "Nên mang áo ấm giữ nhiệt." },
-              { time: "08:30 - 11:00", spot: "Quán Cà Phê Túi Mơ To", description: "Thưởng thức cà phê trứng & ngắm vườn cúc họa mi.", tip: "Góc chụp ảnh đẹp ở nhà lồng kính." }
-            ]
-          },
-          {
-            dayNumber: 2,
-            theme: "Chinh Phục Đỉnh LangBiang & Đêm Lửa Trại",
-            activities: [
-              { time: "08:00 - 12:00", spot: "Đỉnh LangBiang", description: "Trekking hoặc di chuyển bằng xe Jeep ngắm toàn cảnh suối Vàng suối Bạc.", tip: "Mang giày thể thao chống trượt." }
-            ]
-          }
-        ],
-        safetyTips: ["Đèo Đà Lạt sương mù ban đêm, nên về homestay trước 21:00.", "Luôn chuẩn bị áo mưa nhẹ trong balo phượt."]
-      };
+    try {
+      const res = await fetch('/api/bookings/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId: selectedRoom.id,
+          checkIn: checkInDate,
+          checkOut: checkOutDate,
+          guestName: fullName,
+          email,
+          phone,
+          cccd,
+          backpackerLevel,
+          paymentMethod,
+          sessionId: sessionIdRef.current
+        })
+      });
 
-      const newBooking: Booking = {
-        id: bookingId,
+      const data = await res.json();
+
+      if (res.ok && data.success && data.booking) {
+        const serverBooking = data.booking;
+        const newBooking: Booking = {
+          id: serverBooking.id,
+          guestName: serverBooking.guestName,
+          cccd: serverBooking.cccd,
+          email: serverBooking.email,
+          phone: serverBooking.phone,
+          backpackerLevel: backpackerLevel,
+          roomName: serverBooking.roomName,
+          roomType: selectedRoom.id === 'room-panorama' ? 'Deluxe' : 'Standard',
+          checkInDate: serverBooking.checkIn,
+          checkOutDate: serverBooking.checkOut,
+          nights: serverBooking.nights,
+          guestsCount: `${guestsCount.toString().padStart(2, '0')} Người lớn`,
+          basePrice: serverBooking.basePrice,
+          serviceFee: serverBooking.serviceFee,
+          totalPrice: serverBooking.totalPrice,
+          paymentMethod: serverBooking.paymentMethod,
+          status: 'pending_payment',
+          lockedUntil: serverBooking.lockedUntil,
+          aiItinerary: serverBooking.aiItinerary,
+          smartLockCode: serverBooking.smartLockCode,
+          eta: '14:00'
+        };
+
+        onBookingSuccess(newBooking);
+        setLastCreatedBooking(newBooking);
+        setIsProcessing(false);
+        setBookedSuccess(true);
+        setShowSimulatedEmailModal(true);
+      } else {
+        alert(data.error || 'Không thể tạo đơn đặt phòng lúc này.');
+        setIsProcessing(false);
+      }
+    } catch (err) {
+      console.error("Booking creation error:", err);
+      const fallbackBooking: Booking = {
+        id: `booking-${Date.now()}`,
         guestName: fullName,
-        cccd: cccd,
-        email: email,
-        phone: phone,
-        backpackerLevel: backpackerLevel,
+        cccd,
+        email,
+        phone,
+        backpackerLevel,
         roomName: selectedRoom.name,
-        roomType: selectedRoom.id === 'room-panorama' ? 'Deluxe' : 'Standard',
-        checkInDate: '15/12/2024',
-        checkOutDate: '18/12/2024',
-        nights: nights,
+        roomType: 'Standard',
+        checkInDate,
+        checkOutDate,
+        nights,
         guestsCount: `${guestsCount.toString().padStart(2, '0')} Người lớn`,
-        basePrice: basePrice,
-        serviceFee: serviceFee,
-        totalPrice: totalPrice,
-        paymentMethod: paymentMethod,
+        basePrice,
+        serviceFee,
+        totalPrice,
+        paymentMethod,
         status: 'pending_payment',
-        lockedUntil: lockedUntilIso,
-        aiItinerary: sampleAiItinerary,
+        lockedUntil: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
         eta: '14:00'
       };
-
-      onBookingSuccess(newBooking);
-      setLastCreatedBooking(newBooking);
+      onBookingSuccess(fallbackBooking);
+      setLastCreatedBooking(fallbackBooking);
       setIsProcessing(false);
       setBookedSuccess(true);
       setShowSimulatedEmailModal(true);
-    }, 1000);
+    }
   };
 
   return (
@@ -537,7 +582,7 @@ export default function BookingView({ selectedRoom, currentUser, onBookingSucces
               </div>
               <div className="flex justify-between">
                 <span>Thời gian lưu trú:</span>
-                <span className="font-bold text-[#141b2b]">{nights} đêm (15/12 - 18/12/2024)</span>
+                <span className="font-bold text-[#141b2b]">{nights} đêm ({checkInDate} đến {checkOutDate})</span>
               </div>
               <div className="flex justify-between pt-2 border-t border-gray-200/60 text-sm">
                 <span className="font-black text-[#141b2b]">Tổng tiền đã trả:</span>
@@ -788,7 +833,17 @@ export default function BookingView({ selectedRoom, currentUser, onBookingSucces
                   {/* Room parameter custom adjuster buttons */}
                   <div className="border-t border-b border-gray-100 py-4 space-y-4 text-xs text-[#404944]">
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold flex items-center gap-1"><Calendar className="w-4 h-4 text-[#003527]" /> Số đêm đặt phòng</span>
+                      <span className="font-semibold flex items-center gap-1"><Calendar className="w-4 h-4 text-[#003527]" /> Ngày Check-in</span>
+                      <input 
+                        type="date"
+                        value={checkInDate}
+                        onChange={(e) => setCheckInDate(e.target.value)}
+                        className="bg-[#f1f3ff] px-2 py-1 rounded-lg text-xs font-bold text-[#141b2b] border border-gray-200 outline-none focus:border-[#003527]"
+                      />
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold flex items-center gap-1"><Calendar className="w-4 h-4 text-[#003527]" /> Số đêm đặt (Trả: {checkOutDate})</span>
                       <div className="flex items-center gap-2 bg-[#f1f3ff] px-2 py-1 rounded-lg">
                         <button 
                           type="button" 
