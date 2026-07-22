@@ -1,0 +1,6 @@
+{
+  "name": "HavenStay",
+  "description": "Hệ thống đặt phòng du lịch homestay, trải nghiệm phòng 360 VR (HavenStay) và bảng quản lý lễ tân (HavenAdmin) với đầy đủ tính năng tương tác thực tế.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
