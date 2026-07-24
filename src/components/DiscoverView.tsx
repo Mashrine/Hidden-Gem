@@ -12,31 +12,75 @@ import MyBookingsModal from './MyBookingsModal';
 interface DiscoverViewProps {
   bookings?: Booking[];
   currentUser?: UserAccount | null;
+  initialOpenMyBookings?: boolean;
   onOpenAuthModal?: (role: UserRole) => void;
   onLogout?: () => void;
   onCancelBooking?: (bookingId: string) => void;
-  onSelectRoom: (room: Room) => void;
+  onEarlyCheckOut?: (bookingId: string, notes?: string) => void;
+  onSelectRoom: (room: Room, checkIn?: string, checkOut?: string, nights?: number) => void;
   onNavigateToBooking: () => void;
   onNavigateToAdmin: () => void;
+  onAddSampleBooking?: () => void;
 }
 
 export default function DiscoverView({ 
   bookings = [], 
   currentUser,
+  initialOpenMyBookings = false,
   onOpenAuthModal,
   onLogout,
   onCancelBooking,
+  onEarlyCheckOut,
   onSelectRoom, 
   onNavigateToBooking, 
-  onNavigateToAdmin 
+  onNavigateToAdmin,
+  onAddSampleBooking
 }: DiscoverViewProps) {
   const [selectedPin, setSelectedPin] = useState<string | null>('haven');
 
-  const [checkInDate, setCheckInDate] = useState<string>('');
-  const [checkOutDate, setCheckOutDate] = useState<string>('');
+  const todayStr = new Date().toISOString().split('T')[0];
+  const tomorrowStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+
+  const [checkInDate, setCheckInDate] = useState<string>(todayStr);
+  const [checkOutDate, setCheckOutDate] = useState<string>(tomorrowStr);
+  const [onlyAvailableFilter, setOnlyAvailableFilter] = useState<boolean>(false);
   const [searchSuccess, setSearchSuccess] = useState<boolean>(false);
   const [isAiPlannerOpen, setIsAiPlannerOpen] = useState<boolean>(false);
-  const [isMyBookingsOpen, setIsMyBookingsOpen] = useState<boolean>(false);
+  const [isMyBookingsOpen, setIsMyBookingsOpen] = useState<boolean>(initialOpenMyBookings);
+
+  React.useEffect(() => {
+    if (initialOpenMyBookings) {
+      setIsMyBookingsOpen(true);
+    }
+  }, [initialOpenMyBookings]);
+
+  // Helper to check room occupancy during selected dates
+  const isRoomOccupiedDuringDates = (roomName: string, cin: string, cout: string): boolean => {
+    if (!cin || !cout) return false;
+    const searchIn = new Date(cin);
+    const searchOut = new Date(cout);
+    if (isNaN(searchIn.getTime()) || isNaN(searchOut.getTime())) return false;
+
+    return bookings.some(b => {
+      if (!b.roomName || !b.roomName.toLowerCase().includes(roomName.toLowerCase())) return false;
+      if (b.status === 'cancelled' || b.status === 'checked_out') return false;
+      
+      const bIn = new Date(b.checkInDate);
+      const bOut = b.checkOutDate ? new Date(b.checkOutDate) : new Date(bIn.getTime() + (b.nights || 1) * 86400000);
+      
+      return searchIn < bOut && searchOut > bIn;
+    });
+  };
+
+  const calcNights = (cin: string, cout: string) => {
+    const d1 = new Date(cin);
+    const d2 = new Date(cout);
+    if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return 1;
+    const diff = Math.round((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24));
+    return diff > 0 ? diff : 1;
+  };
+
+  const searchNights = calcNights(checkInDate, checkOutDate);
 
   // Filter Bar States
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
@@ -46,6 +90,11 @@ export default function DiscoverView({
 
   // Compute Filtered Rooms
   const filteredRooms = INITIAL_ROOMS.filter((room) => {
+    // 0. Only available filter
+    if (onlyAvailableFilter && isRoomOccupiedDuringDates(room.name, checkInDate, checkOutDate)) {
+      return false;
+    }
+
     // 1. Price filter
     if (selectedPriceRange === 'under1m' && room.pricePerNight >= 1000000) return false;
     if (selectedPriceRange === '1m-1.5m' && (room.pricePerNight < 1000000 || room.pricePerNight > 1500000)) return false;
@@ -73,13 +122,14 @@ export default function DiscoverView({
     return true;
   });
 
-  const isFilterActive = selectedPriceRange !== 'all' || selectedCapacity !== 'all' || selectedRoomType !== 'all' || searchQuery.trim() !== '';
+  const isFilterActive = selectedPriceRange !== 'all' || selectedCapacity !== 'all' || selectedRoomType !== 'all' || searchQuery.trim() !== '' || onlyAvailableFilter;
 
   const handleResetFilters = () => {
     setSelectedPriceRange('all');
     setSelectedCapacity('all');
     setSelectedRoomType('all');
     setSearchQuery('');
+    setOnlyAvailableFilter(false);
   };
 
   // Filter or search simulation
@@ -88,14 +138,23 @@ export default function DiscoverView({
       alert('Vui lòng nhập ngày nhận phòng và ngày trả phòng.');
       return;
     }
+    if (new Date(checkOutDate) <= new Date(checkInDate)) {
+      alert('Ngày trả phòng phải sau ngày nhận phòng ít nhất 1 đêm.');
+      return;
+    }
     setSearchSuccess(true);
     setTimeout(() => {
       setSearchSuccess(false);
-    }, 3000);
+    }, 3500);
+
+    const roomElem = document.getElementById('room-list-section');
+    if (roomElem) {
+      roomElem.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const handleRoomClick = (room: Room) => {
-    onSelectRoom(room);
+    onSelectRoom(room, checkInDate, checkOutDate, searchNights);
     onNavigateToBooking();
   };
 
@@ -112,8 +171,12 @@ export default function DiscoverView({
         isOpen={isMyBookingsOpen}
         onClose={() => setIsMyBookingsOpen(false)}
         bookings={bookings}
+        currentUser={currentUser}
+        onOpenAuthModal={onOpenAuthModal}
         onCancelBooking={onCancelBooking}
+        onEarlyCheckOut={onEarlyCheckOut}
         onNavigateToAdmin={onNavigateToAdmin}
+        onAddSampleBooking={onAddSampleBooking}
       />
 
       {/* Search Result Success Banner */}
@@ -140,7 +203,7 @@ export default function DiscoverView({
               <MapPin className="w-5 h-5 text-[#80bea6]" />
             </div>
             <h1 className="text-xl md:text-2xl font-extrabold text-[#003527] tracking-tight transition-transform group-hover:scale-102">
-              Haven<span className="text-[#9b4500]">Stay</span>
+              Hidden <span className="text-[#9b4500]">Gem</span>
             </h1>
           </div>
 
@@ -158,16 +221,39 @@ export default function DiscoverView({
           {/* Actions */}
           <div className="flex items-center gap-2 md:gap-3">
             <button
-              onClick={() => setIsMyBookingsOpen(true)}
+              onClick={() => {
+                if (!currentUser) {
+                  if (onOpenAuthModal) onOpenAuthModal('customer');
+                } else {
+                  setIsMyBookingsOpen(true);
+                }
+              }}
               className="relative flex items-center gap-2 px-3.5 py-1.5 bg-[#003527] text-white hover:bg-[#064e3b] rounded-xl text-xs font-bold transition-all shadow-sm"
             >
               <Building2 className="w-4 h-4 text-[#80bea6]" />
               <span className="hidden sm:inline">Phòng Đã Đặt Của Tôi</span>
-              {bookings.length > 0 && (
-                <span className="bg-[#fd8a42] text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
-                  {bookings.length}
-                </span>
-              )}
+              {currentUser && (() => {
+                const activeCount = currentUser.role === 'admin' 
+                  ? bookings.filter(b => b.status !== 'checked_out').length
+                  : bookings.filter(b => {
+                      if (b.status === 'checked_out') return false;
+                      const userEmail = currentUser.email?.toLowerCase().trim();
+                      const userPhone = currentUser.phone?.trim();
+                      const userName = currentUser.fullName?.toLowerCase().trim();
+                      const userCccd = currentUser.cccd?.trim();
+                      return (
+                        (userEmail && b.email?.toLowerCase().trim() === userEmail) ||
+                        (userPhone && b.phone?.trim() === userPhone) ||
+                        (userName && b.guestName?.toLowerCase().trim() === userName) ||
+                        (userCccd && b.cccd?.trim() === userCccd)
+                      );
+                    }).length;
+                return activeCount > 0 ? (
+                  <span className="bg-[#fd8a42] text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
+                    {activeCount}
+                  </span>
+                ) : null;
+              })()}
             </button>
 
             {/* Multi-Role Account Badge / Login Button */}
@@ -212,13 +298,6 @@ export default function DiscoverView({
               title="AI Planner"
             >
               <Sparkles className="w-4 h-4 text-[#9b4500]" />
-            </button>
-
-            <button 
-              onClick={onNavigateToAdmin} 
-              className="text-xs font-semibold uppercase tracking-wider text-[#9b4500] hover:text-[#682c00] border border-[#ffdbca] bg-[#ffdbca]/20 px-3 py-1.5 rounded-lg transition-all"
-            >
-              Lễ tân Admin ➔
             </button>
           </div>
         </div>
@@ -341,26 +420,34 @@ export default function DiscoverView({
               <div className="flex-1 w-full grid grid-cols-2 gap-4 md:gap-2 divide-x divide-gray-200/60 px-2 md:pl-6">
                 <div className="flex flex-col">
                   <span className="text-[9px] font-bold text-[#404944] uppercase tracking-wider mb-0.5 flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-[#9b4500]" /> Ngày Đến
+                    <Calendar className="w-3 h-3 text-[#9b4500]" /> NGÀY ĐẾN
                   </span>
                   <input 
-                    type="text" 
-                    placeholder="Chọn ngày nhận" 
+                    type="date" 
+                    min={todayStr}
                     value={checkInDate}
-                    onChange={(e) => setCheckInDate(e.target.value)}
-                    className="bg-transparent border-none text-xs md:text-sm font-medium text-[#141b2b] placeholder-gray-400 focus:outline-none focus:ring-0 p-0 h-6"
+                    onChange={(e) => {
+                      const newIn = e.target.value;
+                      setCheckInDate(newIn);
+                      if (checkOutDate && newIn >= checkOutDate) {
+                        const d = new Date(newIn);
+                        d.setDate(d.getDate() + 1);
+                        setCheckOutDate(d.toISOString().split('T')[0]);
+                      }
+                    }}
+                    className="bg-transparent border-none text-xs md:text-sm font-extrabold text-[#003527] focus:outline-none focus:ring-0 p-0 h-6 cursor-pointer"
                   />
                 </div>
                 <div className="flex flex-col pl-4">
                   <span className="text-[9px] font-bold text-[#404944] uppercase tracking-wider mb-0.5 flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-[#9b4500]" /> Ngày Đi
+                    <Calendar className="w-3 h-3 text-[#9b4500]" /> NGÀY ĐI ({searchNights} đêm)
                   </span>
                   <input 
-                    type="text" 
-                    placeholder="Chọn ngày trả" 
+                    type="date" 
+                    min={checkInDate || todayStr}
                     value={checkOutDate}
                     onChange={(e) => setCheckOutDate(e.target.value)}
-                    className="bg-transparent border-none text-xs md:text-sm font-medium text-[#141b2b] placeholder-gray-400 focus:outline-none focus:ring-0 p-0 h-6"
+                    className="bg-transparent border-none text-xs md:text-sm font-extrabold text-[#003527] focus:outline-none focus:ring-0 p-0 h-6 cursor-pointer"
                   />
                 </div>
               </div>
@@ -378,16 +465,31 @@ export default function DiscoverView({
         </section>
 
         {/* Room Suggestion Section & Filter Bar */}
-        <section className="max-w-7xl mx-auto px-6 py-12 relative z-20">
+        <section id="room-list-section" className="max-w-7xl mx-auto px-6 py-12 relative z-20">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
             <div>
               <h2 className="text-2xl md:text-3xl font-extrabold text-[#003527] tracking-tight">Danh Sách Phòng Khám Phá</h2>
-              <p className="text-sm md:text-base text-[#404944]">Lọc phòng phù hợp theo nhu cầu nghỉ dưỡng riêng của bạn</p>
+              <p className="text-sm md:text-base text-[#404944]">
+                Thời gian tìm kiếm: <strong className="text-[#003527]">{checkInDate}</strong> đến <strong className="text-[#003527]">{checkOutDate}</strong> ({searchNights} đêm)
+              </p>
             </div>
             
-            <div className="flex items-center gap-2 text-xs font-bold text-[#003527] bg-[#e9edff] px-3.5 py-2 rounded-xl border border-[#003527]/10 shrink-0">
-              <Check className="w-4 h-4 text-[#80bea6]" />
-              <span>Hiển thị <strong>{filteredRooms.length}</strong> / {INITIAL_ROOMS.length} phòng khả dụng</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setOnlyAvailableFilter(prev => !prev)}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                  onlyAvailableFilter 
+                    ? 'bg-[#003527] text-white border-[#003527]' 
+                    : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                }`}
+              >
+                <Check className="w-4 h-4 text-[#80bea6]" />
+                <span>Chỉ hiện phòng còn trống ({checkInDate} - {checkOutDate})</span>
+              </button>
+
+              <div className="flex items-center gap-2 text-xs font-bold text-[#003527] bg-[#e9edff] px-3.5 py-2 rounded-xl border border-[#003527]/10 shrink-0">
+                <span>Hiển thị <strong>{filteredRooms.length}</strong> / {INITIAL_ROOMS.length} phòng</span>
+              </div>
             </div>
           </div>
 
@@ -526,67 +628,99 @@ export default function DiscoverView({
           {/* Cards Grid or Empty State */}
           {filteredRooms.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {filteredRooms.map((room) => (
-                <div 
-                  key={room.id}
-                  onClick={() => handleRoomClick(room)}
-                  className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group cursor-pointer flex flex-col justify-between"
-                >
-                  <div className="relative h-52 overflow-hidden">
-                    <img 
-                      src={room.image} 
-                      alt={room.name} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      referrerPolicy="no-referrer"
-                    />
-                    {/* Price Tag Overlay */}
-                    <div className="absolute top-4 right-4 bg-[#9b4500] text-white px-3 py-1 rounded-xl text-xs font-bold shadow-md">
-                      {room.pricePerNight.toLocaleString('vi-VN')}đ / đêm
+              {filteredRooms.map((room) => {
+                const isOccupied = isRoomOccupiedDuringDates(room.name, checkInDate, checkOutDate);
+
+                return (
+                  <div 
+                    key={room.id}
+                    onClick={() => handleRoomClick(room)}
+                    className={`bg-white rounded-2xl overflow-hidden border transition-all duration-300 group cursor-pointer flex flex-col justify-between ${
+                      isOccupied 
+                        ? 'border-red-200/80 bg-red-50/10 opacity-90' 
+                        : 'border-gray-100 shadow-sm hover:shadow-xl'
+                    }`}
+                  >
+                    <div className="relative h-52 overflow-hidden">
+                      <img 
+                        src={room.image} 
+                        alt={room.name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        referrerPolicy="no-referrer"
+                      />
+
+                      {/* Room Availability Badge */}
+                      <div className="absolute top-4 left-4">
+                        {isOccupied ? (
+                          <span className="bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-md uppercase tracking-wider flex items-center gap-1">
+                            ❌ Đã hết phòng ({checkInDate})
+                          </span>
+                        ) : (
+                          <span className="bg-emerald-600 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-md uppercase tracking-wider flex items-center gap-1">
+                            ✅ Còn phòng trống ({searchNights} đêm)
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Price Tag Overlay */}
+                      <div className="absolute top-4 right-4 bg-[#9b4500] text-white px-3 py-1 rounded-xl text-xs font-bold shadow-md">
+                        {room.pricePerNight.toLocaleString('vi-VN')}đ / đêm
+                      </div>
+
+                      {/* VR 360 Overlay */}
+                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[1px]">
+                        <button className="bg-white text-[#003527] px-5 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 hover:scale-105 transition-transform shadow-lg">
+                          <Eye className="w-4 h-4 text-[#9b4500]" />
+                          Xem VR 360° & Đặt Phòng
+                        </button>
+                      </div>
                     </div>
-                    {/* VR 360 Overlay */}
-                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[1px]">
-                      <button className="bg-white text-[#003527] px-5 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 hover:scale-105 transition-transform shadow-lg">
-                        <Eye className="w-4 h-4 text-[#9b4500]" />
-                        Xem VR 360°
+
+                    <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                      <div>
+                        <div className="flex justify-between items-start gap-1 mb-1.5">
+                          <h3 className="font-bold text-base text-[#141b2b] leading-tight group-hover:text-[#003527] transition-colors">{room.name}</h3>
+                          <div className="flex items-center gap-0.5 text-[#9b4500] shrink-0 font-bold text-sm">
+                            <Star className="w-3.5 h-3.5 fill-[#9b4500]" />
+                            {room.rating.toFixed(1)}
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-400 block mb-2">{room.location}</p>
+
+                        {/* Room Attributes Bar (Capacity & Type) */}
+                        <div className="flex items-center gap-2 text-[11px] font-semibold text-[#003527] mb-2">
+                          <span className="bg-[#e9edff] px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <Users className="w-3 h-3 text-[#9b4500]" /> {room.capacity || 2} khách
+                          </span>
+                          <span className="bg-gray-100 px-2 py-0.5 rounded-md flex items-center gap-1 text-gray-700">
+                            <Home className="w-3 h-3 text-gray-500" /> {room.roomType || 'Homestay'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-1.5 flex-wrap">
+                        {room.tags.map((tag, i) => (
+                          <span 
+                            key={i} 
+                            className="bg-[#f1f3ff] text-[#404944] border border-[#dce2f7] px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Action Button */}
+                      <button className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 mt-2 ${
+                        isOccupied 
+                          ? 'bg-gray-100 text-gray-500 hover:bg-gray-200' 
+                          : 'bg-[#003527] text-white hover:bg-[#064e3b] shadow-sm'
+                      }`}>
+                        {isOccupied ? 'Trùng ngày đặt (Xem phòng)' : 'Đặt Ngay Ngày Này ➔'}
                       </button>
                     </div>
                   </div>
-
-                  <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                    <div>
-                      <div className="flex justify-between items-start gap-1 mb-1.5">
-                        <h3 className="font-bold text-base text-[#141b2b] leading-tight group-hover:text-[#003527] transition-colors">{room.name}</h3>
-                        <div className="flex items-center gap-0.5 text-[#9b4500] shrink-0 font-bold text-sm">
-                          <Star className="w-3.5 h-3.5 fill-[#9b4500]" />
-                          {room.rating.toFixed(1)}
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-400 block mb-2">{room.location}</p>
-
-                      {/* Room Attributes Bar (Capacity & Type) */}
-                      <div className="flex items-center gap-2 text-[11px] font-semibold text-[#003527] mb-2">
-                        <span className="bg-[#e9edff] px-2 py-0.5 rounded-md flex items-center gap-1">
-                          <Users className="w-3 h-3 text-[#9b4500]" /> {room.capacity || 2} khách
-                        </span>
-                        <span className="bg-gray-100 px-2 py-0.5 rounded-md flex items-center gap-1 text-gray-700">
-                          <Home className="w-3 h-3 text-gray-500" /> {room.roomType || 'Homestay'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-1.5 flex-wrap">
-                      {room.tags.map((tag, i) => (
-                        <span 
-                          key={i} 
-                          className="bg-[#f1f3ff] text-[#404944] border border-[#dce2f7] px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm space-y-4">

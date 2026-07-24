@@ -306,7 +306,7 @@ export default function AuthModal({
                 </span>
               </div>
               <p className="text-xs text-[#80bea6] mt-0.5">
-                Vui lòng lựa chọn vai trò sử dụng hệ thống HavenStay
+                Vui lòng lựa chọn vai trò sử dụng hệ thống Hidden Gem
               </p>
             </div>
           </div>

@@ -1,4 +1,4 @@
-# 🏡 HavenStay - Hệ Thống Đặt Phòng Homestay & VR 360°
+# 🏡 Hidden Gem - Hệ Thống Đặt Phòng Homestay & VR 360°
 
 Hệ thống ứng dụng Web Full-Stack dành cho khách hàng đặt phòng Homestay nghỉ dưỡng (với trải nghiệm VR 360°, Gemini AI Trip Planner, khóa giữ chỗ server Pessimistic Locking) và màn hình Lễ tân Admin quản lý check-in, tính hóa đơn và mã hóa sơ đồ DB.
 
@@ -15,8 +15,8 @@ Hệ thống ứng dụng Web Full-Stack dành cho khách hàng đặt phòng Ho
 
 ### 🔨 Các Bước Cài Đặt & Chạy Lên Localhost
 
-#### Bước 1: Mở dự án trong Visual Studio Code
-Mở VS Code, chọn **File** ➔ **Open Folder...** ➔ Chọn thư mục dự án `havenstay`.
+#### Bước 1: Mở dự án trong Visual Studio Code / Visual Studio
+Mở VS Code hoặc Visual Studio, chọn **File** ➔ **Open Folder...** ➔ Chọn thư mục dự án `Hidden Gem`.
 
 #### Bước 2: Cấu hình biến môi trường
 Tạo file `.env` ở thư mục gốc (hoặc sao chép từ `.env.example`):
@@ -39,6 +39,8 @@ Chạy lệnh phát triển:
 ```bash
 npm run dev
 ```
+Hoặc bấm phím **F5** trong VS Code (đã được cấu hình sẵn trong `.vscode/launch.json`).
+
 Hệ thống Backend Express + Vite sẽ tự động khởi tạo trên cổng **3000**.
 Mở trình duyệt bất kỳ và truy cập địa chỉ:
 👉 **`http://localhost:3000`**
@@ -53,6 +55,7 @@ Mở trình duyệt bất kỳ và truy cập địa chỉ:
 | `npm run build` | Đóng gói sản phẩm thành tệp `dist/server.cjs` chuẩn Production |
 | `npm start` | Chạy ứng dụng đã build trong môi trường Production (`node dist/server.cjs`) |
 | `npm run lint` | Kiểm tra lỗi cú pháp TypeScript (`tsc --noEmit`) |
+
 
 ---
 

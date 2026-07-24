@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-import OverviewTab from './admin/OverviewTab';
 import RoomManagementTab from './admin/RoomManagementTab';
 import ReceptionTab from './admin/ReceptionTab';
 import CustomersTab from './admin/CustomersTab';
@@ -19,6 +18,9 @@ interface AdminViewProps {
   onCheckIn: (bookingId: string, updatedBooking: any) => void;
   onAddService: (guestId: string, serviceName: string, servicePrice: number) => void;
   onCheckOut: (checkoutId: string) => void;
+  onEarlyCheckOut?: (bookingId: string, notes?: string) => void;
+  onDeleteStayGuest?: (stayId: string) => void;
+  onClearAllData?: () => void;
   onNavigateToDiscover: () => void;
   onLogout?: () => void;
 }
@@ -31,6 +33,9 @@ export default function AdminView({
   onCheckIn, 
   onAddService, 
   onCheckOut,
+  onEarlyCheckOut,
+  onDeleteStayGuest,
+  onClearAllData,
   onNavigateToDiscover,
   onLogout
 }: AdminViewProps) {
@@ -69,7 +74,7 @@ export default function AdminView({
     }, 4000);
   };
 
-  const pendingCount = bookings.filter(b => b.status === 'pending').length;
+  const pendingCount = bookings.filter(b => b.status === 'pending' || b.status === 'pending_payment').length;
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f9f9ff]">
@@ -82,29 +87,13 @@ export default function AdminView({
               <Home className="w-5 h-5 text-[#80bea6]" />
             </div>
             <div>
-              <h1 className="text-xl font-extrabold text-[#003527] leading-none">HavenAdmin</h1>
+              <h1 className="text-xl font-extrabold text-[#003527] leading-none">Hidden Gem</h1>
               <p className="text-[10px] text-[#404944] tracking-widest font-semibold uppercase mt-1">Property Control</p>
             </div>
           </div>
 
           {/* Navigation Links */}
           <nav className="space-y-1">
-            <button 
-              onClick={() => setActiveTab('overview')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs transition-all active:scale-98 ${activeTab === 'overview' ? 'bg-[#003527] text-white shadow-sm' : 'text-[#404944] hover:bg-[#e9edff]'}`}
-            >
-              <Home className="w-4 h-4" />
-              <span>Overview</span>
-            </button>
-
-            <button 
-              onClick={() => setActiveTab('rooms')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs transition-all active:scale-98 ${activeTab === 'rooms' ? 'bg-[#003527] text-white shadow-sm' : 'text-[#404944] hover:bg-[#e9edff]'}`}
-            >
-              <Bed className="w-4 h-4" />
-              <span>Room Management</span>
-            </button>
-
             <button 
               onClick={() => setActiveTab('reception')}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-xs transition-all active:scale-98 ${activeTab === 'reception' ? 'bg-[#fd8a42] text-white shadow-sm' : 'text-[#404944] hover:bg-[#e9edff]'}`}
@@ -118,6 +107,14 @@ export default function AdminView({
                   {pendingCount} MỚI
                 </span>
               )}
+            </button>
+
+            <button 
+              onClick={() => setActiveTab('rooms')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs transition-all active:scale-98 ${activeTab === 'rooms' ? 'bg-[#003527] text-white shadow-sm' : 'text-[#404944] hover:bg-[#e9edff]'}`}
+            >
+              <Bed className="w-4 h-4" />
+              <span>Room Management</span>
             </button>
 
             <button 
@@ -168,7 +165,6 @@ export default function AdminView({
         <header className="flex justify-between items-center mb-4 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
           <div>
             <h2 className="text-xl md:text-2xl font-black text-[#003527]">
-              {activeTab === 'overview' && 'Bảng Điều Khiển Tổng Quan'}
               {activeTab === 'rooms' && 'Quản Lý Danh Sách Phòng'}
               {activeTab === 'reception' && 'Màn Hình Reception Lễ Tân'}
               {activeTab === 'customers' && 'Quản Lý Khách Hàng'}
@@ -238,8 +234,13 @@ export default function AdminView({
         )}
 
         {/* Tab Content Renderer */}
-        {activeTab === 'overview' && <OverviewTab />}
-        {activeTab === 'rooms' && <RoomManagementTab />}
+        {activeTab === 'rooms' && (
+          <RoomManagementTab 
+            bookings={bookings}
+            stayGuests={stayGuests}
+            checkoutGuests={checkoutGuests}
+          />
+        )}
         {activeTab === 'reception' && (
           <ReceptionTab 
             bookings={bookings}
@@ -249,6 +250,9 @@ export default function AdminView({
             onCheckIn={onCheckIn}
             onAddService={onAddService}
             onCheckOut={onCheckOut}
+            onEarlyCheckOut={onEarlyCheckOut}
+            onDeleteStayGuest={onDeleteStayGuest}
+            onClearAllData={onClearAllData}
             showToast={showToast}
           />
         )}

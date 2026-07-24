@@ -183,88 +183,9 @@ export const INITIAL_ROOMS: Room[] = [
   }
 ];
 
-export const INITIAL_BOOKINGS: Booking[] = [
-  {
-    id: 'booking-1',
-    guestName: 'Nguyễn Văn An',
-    cccd: '012345678901',
-    email: 'an.nguyen@gmail.com',
-    phone: '+84 912 345 678',
-    backpackerLevel: 'Lính mới (Newbie) - Thích nghỉ dưỡng nhẹ nhàng',
-    roomName: 'Căn hộ Panorama View',
-    roomType: 'Panorama Suite',
-    checkInDate: '15/12/2024',
-    checkOutDate: '18/12/2024',
-    nights: 3,
-    guestsCount: '2 người lớn, 1 trẻ em',
-    basePrice: 4500000,
-    serviceFee: 250000,
-    totalPrice: 4750000,
-    paymentMethod: 'vnpay',
-    status: 'pending',
-    eta: '14:00'
-  },
-  {
-    id: 'booking-2',
-    guestName: 'Trần Thị Bích',
-    cccd: '123456789012',
-    email: 'bich.tran@gmail.com',
-    phone: '+84 987 654 321',
-    backpackerLevel: 'Tay phượt lão luyện (Pro) - Sẵn sàng cho mọi địa hình',
-    roomName: 'Phòng Suite Rừng Thông',
-    roomType: 'Suite',
-    checkInDate: '21/07/2026',
-    checkOutDate: '22/07/2026',
-    nights: 1,
-    guestsCount: '1 người lớn',
-    basePrice: 1200000,
-    serviceFee: 50000,
-    totalPrice: 1250000,
-    paymentMethod: 'stripe',
-    status: 'pending',
-    eta: '15:30'
-  }
-];
+export const INITIAL_BOOKINGS: Booking[] = [];
 
-export const INITIAL_STAY_GUESTS = [
-  {
-    id: 'stay-1',
-    roomNumber: 'Phòng 101 - Panorama',
-    roomType: 'Panorama View',
-    guestName: 'Lê Minh Tuấn',
-    services: ['Ăn sáng buffet', 'Giặt là cao cấp'],
-    status: 'active'
-  },
-  {
-    id: 'stay-2',
-    roomNumber: 'Phòng 205 - Royal Villa',
-    roomType: 'Royal Villa',
-    guestName: 'John Wick',
-    services: ['BBQ Sân thượng', 'Thuê xe Moto Vespa'],
-    status: 'active'
-  }
-];
+export const INITIAL_STAY_GUESTS: any[] = [];
 
-export const INITIAL_CHECKOUTS: CheckoutGuest[] = [
-  {
-    id: 'checkout-1',
-    roomNumber: 'Phòng 108 - Studio Sài Gòn',
-    roomType: 'Studio',
-    guestName: 'Phạm Hồng Nhung',
-    roomPrice: 2500000,
-    servicePrice: 450000,
-    totalPrice: 2950000,
-    status: 'overtime'
-  },
-  {
-    id: 'checkout-2',
-    roomNumber: 'Phòng 103 - Gác Mái',
-    roomType: 'Scandinavian Loft',
-    guestName: 'Hoàng Anh Dũng',
-    roomPrice: 4800000,
-    servicePrice: 400000,
-    totalPrice: 5200000,
-    status: 'normal',
-    checkoutTime: '12:00'
-  }
-];
+export const INITIAL_CHECKOUTS: CheckoutGuest[] = [];
+

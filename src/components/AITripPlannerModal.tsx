@@ -161,7 +161,7 @@ export default function AITripPlannerModal({ isOpen, onClose, onSelectRoom }: AI
               <div className="bg-[#003527] text-white p-5 rounded-2xl relative overflow-hidden">
                 <div className="relative z-10">
                   <span className="bg-[#80bea6]/20 text-[#80bea6] text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-2 inline-block">
-                    Gợi ý từ HavenAI Planner
+                    Gợi ý từ Hidden Gem AI Planner
                   </span>
                   <h4 className="text-xl font-extrabold text-white mb-1">{tripPlan.title}</h4>
                   <p className="text-xs text-[#80bea6] flex items-center gap-1">

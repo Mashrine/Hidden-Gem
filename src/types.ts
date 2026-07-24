@@ -34,6 +34,9 @@ export interface Booking {
   aiItinerary?: any; // Stored AI trip itinerary JSON/object
   eta?: string;
   createdAt?: string;
+  actualCheckOutDate?: string;
+  earlyCheckOut?: boolean;
+  earlyCheckOutNotes?: string;
 }
 
 export interface StayGuest {
@@ -55,6 +58,7 @@ export interface CheckoutGuest {
   totalPrice: number;
   status: 'normal' | 'overtime';
   checkoutTime?: string;
+  isEarlyCheckOut?: boolean;
 }
 
 export type UserRole = 'customer' | 'admin' | 'guest';

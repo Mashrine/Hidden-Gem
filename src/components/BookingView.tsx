@@ -7,12 +7,24 @@ import PaymentModal from './PaymentModal';
 interface BookingViewProps {
   selectedRoom: Room;
   currentUser?: UserAccount | null;
+  initialCheckInDate?: string;
+  initialCheckOutDate?: string;
+  initialNights?: number;
   onBookingSuccess: (newBooking: Booking) => void;
   onNavigateToDiscover: () => void;
   onNavigateToAdmin: () => void;
 }
 
-export default function BookingView({ selectedRoom, currentUser, onBookingSuccess, onNavigateToDiscover, onNavigateToAdmin }: BookingViewProps) {
+export default function BookingView({ 
+  selectedRoom, 
+  currentUser, 
+  initialCheckInDate,
+  initialCheckOutDate,
+  initialNights,
+  onBookingSuccess, 
+  onNavigateToDiscover, 
+  onNavigateToAdmin 
+}: BookingViewProps) {
   // Booking details state
   const [fullName, setFullName] = useState<string>(currentUser?.fullName || 'Nguyễn Văn A');
   const [cccd, setCccd] = useState<string>(currentUser?.cccd || '012345678901');
@@ -88,16 +100,25 @@ export default function BookingView({ selectedRoom, currentUser, onBookingSucces
   };
   
   // Pricing parameters
-  const [nights, setNights] = useState<number>(3);
+  const [nights, setNights] = useState<number>(() => {
+    if (initialNights && initialNights > 0) return initialNights;
+    return 1;
+  });
   const [guestsCount, setGuestsCount] = useState<number>(2);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [bookedSuccess, setBookedSuccess] = useState<boolean>(false);
 
   // Dynamic Dates State
   const [checkInDate, setCheckInDate] = useState<string>(() => {
+    if (initialCheckInDate) return initialCheckInDate;
     const today = new Date();
     return today.toISOString().split('T')[0];
   });
+
+  useEffect(() => {
+    if (initialCheckInDate) setCheckInDate(initialCheckInDate);
+    if (initialNights && initialNights > 0) setNights(initialNights);
+  }, [selectedRoom.id, initialCheckInDate, initialNights]);
 
   const getCheckOutDate = (inDate: string, n: number) => {
     const d = new Date(inDate);
@@ -371,7 +392,7 @@ export default function BookingView({ selectedRoom, currentUser, onBookingSucces
               <ChevronLeft className="w-5 h-5" />
             </button>
             <h1 className="text-xl md:text-2xl font-extrabold text-[#003527] tracking-tight">
-              Haven<span className="text-[#9b4500]">Stay</span>
+              Hidden <span className="text-[#9b4500]">Gem</span>
             </h1>
           </div>
           <div className="flex items-center gap-4">
@@ -380,12 +401,6 @@ export default function BookingView({ selectedRoom, currentUser, onBookingSucces
               className="text-[#003527] font-semibold text-sm hover:underline"
             >
               Khám Phá
-            </button>
-            <button 
-              onClick={onNavigateToAdmin} 
-              className="text-xs font-semibold uppercase tracking-wider text-[#9b4500] hover:text-[#682c00] border border-[#ffdbca] bg-[#ffdbca]/20 px-3 py-1.5 rounded-lg transition-all"
-            >
-              Quản trị Lễ tân
             </button>
           </div>
         </div>
@@ -509,15 +524,6 @@ export default function BookingView({ selectedRoom, currentUser, onBookingSucces
                 </p>
               </div>
 
-              <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl text-left text-xs text-amber-900 space-y-1 my-2">
-                <p className="font-bold flex items-center gap-1 text-[#9b4500]">
-                  <span>🔔 Đồng bộ dữ liệu Lễ Tân Admin (Real-time):</span>
-                </p>
-                <p className="text-[11px] text-amber-800">
-                  Lễ tân đã nhận được đơn đặt phòng của khách <strong>{fullName}</strong> (SĐT: {phone}).
-                  Trạng thái hiện tại: <span className="font-extrabold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">🟡 Chờ Lễ tân xác nhận</span>
-                </p>
-              </div>
               <p className="text-xs text-gray-500 leading-relaxed mt-2">
                 Cảm ơn <strong>{fullName}</strong>. Đơn đặt phòng và hóa đơn điện tử đã được ghi nhận vào hệ thống.
               </p>
@@ -1048,7 +1054,7 @@ export default function BookingView({ selectedRoom, currentUser, onBookingSucces
                     </div>
                     <div>
                       <span className="text-slate-500 block">Thời gian lưu trú:</span>
-                      <strong className="text-slate-900">{nights} đêm (15/12/2024 - 18/12/2024)</strong>
+                      <strong className="text-slate-900">{nights} đêm ({checkInDate} đến {checkOutDate})</strong>
                     </div>
                     <div>
                       <span className="text-slate-500 block">Số lượng khách:</span>

@@ -12,6 +12,26 @@ export default function App() {
   // Persistent or cached lists state
   const [view, setView] = useState<ViewType>('discover');
   const [selectedRoom, setSelectedRoom] = useState<Room>(INITIAL_ROOMS[0]); // default to Panorama
+
+  // Date search parameters state
+  const [searchCheckInDate, setSearchCheckInDate] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+
+  const [searchCheckOutDate, setSearchCheckOutDate] = useState<string>(() => {
+    const tomorrow = new Date(Date.now() + 86400000);
+    return tomorrow.toISOString().split('T')[0];
+  });
+
+  const [searchNights, setSearchNights] = useState<number>(1);
+
+  const handleSelectRoomWithSearchDates = (room: Room, checkIn?: string, checkOut?: string, nights?: number) => {
+    setSelectedRoom(room);
+    if (checkIn) setSearchCheckInDate(checkIn);
+    if (checkOut) setSearchCheckOutDate(checkOut);
+    if (nights && nights > 0) setSearchNights(nights);
+  };
   
   // Multi-Role User Authentication State
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
@@ -25,6 +45,14 @@ export default function App() {
   const [authModalRole, setAuthModalRole] = useState<UserRole>('customer');
 
   const isAdminLoggedIn = currentUser?.role === 'admin';
+
+  // One-time purge of legacy cached mock data in browser storage
+  if (typeof window !== 'undefined' && !localStorage.getItem('haven_storage_v4_clean')) {
+    localStorage.removeItem('haven_bookings');
+    localStorage.removeItem('haven_stays');
+    localStorage.removeItem('haven_checkouts');
+    localStorage.setItem('haven_storage_v4_clean', 'true');
+  }
 
   const [bookings, setBookings] = useState<Booking[]>(() => {
     const saved = localStorage.getItem('haven_bookings');
@@ -93,9 +121,73 @@ export default function App() {
     }
   };
 
+  const [autoOpenMyBookings, setAutoOpenMyBookings] = useState<boolean>(false);
+
   // Handler for booking submission from Customer Page
   const handleBookingSuccess = (newBooking: Booking) => {
     setBookings(prev => [newBooking, ...prev]);
+
+    // Automatically log in or sync current customer account with the new booking details
+    if (!currentUser) {
+      const newUser: UserAccount = {
+        id: `user-${Date.now()}`,
+        role: 'customer',
+        fullName: newBooking.guestName || 'Khách Hàng',
+        email: newBooking.email || 'khachhang@havenstay.vn',
+        phone: newBooking.phone || '+84 987 654 321',
+        cccd: newBooking.cccd || '012345678901',
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'
+      };
+      setCurrentUser(newUser);
+    } else if (currentUser.role === 'customer') {
+      setCurrentUser(prev => prev ? {
+        ...prev,
+        fullName: newBooking.guestName || prev.fullName,
+        email: newBooking.email || prev.email,
+        phone: newBooking.phone || prev.phone,
+        cccd: newBooking.cccd || prev.cccd
+      } : prev);
+    }
+  };
+
+  const handleAddSampleBooking = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0];
+    const sample: Booking = {
+      id: `booking-${Date.now()}`,
+      guestName: currentUser?.fullName || 'Nguyễn Văn A',
+      cccd: currentUser?.cccd || '012345678901',
+      email: currentUser?.email || 'khachhang@gmail.com',
+      phone: currentUser?.phone || '+84 987 654 321',
+      backpackerLevel: 'Lính mới (Newbie)',
+      roomName: 'Căn Hộ Panorama View',
+      roomType: 'Deluxe',
+      checkInDate: today,
+      checkOutDate: tomorrow,
+      nights: 2,
+      guestsCount: '02 Người lớn',
+      basePrice: 2500000,
+      serviceFee: 250000,
+      totalPrice: 2750000,
+      paymentMethod: 'vnpay',
+      status: 'pending_payment',
+      smartLockCode: '882419',
+      eta: '14:00'
+    };
+    setBookings(prev => [sample, ...prev]);
+
+    if (!currentUser) {
+      const newUser: UserAccount = {
+        id: `user-${Date.now()}`,
+        role: 'customer',
+        fullName: sample.guestName,
+        email: sample.email,
+        phone: sample.phone,
+        cccd: sample.cccd,
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'
+      };
+      setCurrentUser(newUser);
+    }
   };
 
   // Handler for receptionist confirming booking
@@ -153,6 +245,61 @@ export default function App() {
     setCheckoutGuests(prev => prev.filter(c => c.id !== checkoutId));
   };
 
+  // Handler for early check-out
+  const handleEarlyCheckOut = (bookingId: string, notes?: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    const nowTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+    let targetBooking = bookings.find(b => b.id === bookingId);
+
+    setBookings(prev => prev.map(b => {
+      if (b.id === bookingId) {
+        return {
+          ...b,
+          status: 'checked_out' as const,
+          actualCheckOutDate: today,
+          earlyCheckOut: true,
+          earlyCheckOutNotes: notes || 'Check-out sớm theo yêu cầu'
+        };
+      }
+      return b;
+    }));
+
+    if (targetBooking) {
+      setStayGuests(prev => prev.filter(s => s.guestName !== targetBooking.guestName && !s.roomNumber.includes(targetBooking.roomName)));
+
+      const newCheckout: CheckoutGuest = {
+        id: `checkout-early-${Date.now()}`,
+        roomNumber: targetBooking.roomName,
+        roomType: targetBooking.roomType,
+        guestName: targetBooking.guestName,
+        roomPrice: targetBooking.totalPrice,
+        servicePrice: 0,
+        totalPrice: targetBooking.totalPrice,
+        status: 'normal',
+        checkoutTime: nowTime,
+        isEarlyCheckOut: true
+      };
+
+      setCheckoutGuests(prev => [newCheckout, ...prev.filter(c => c.guestName !== targetBooking.guestName)]);
+    }
+  };
+
+  // Handler for deleting a stay guest
+  const handleDeleteStayGuest = (stayId: string) => {
+    setStayGuests(prev => prev.filter(s => s.id !== stayId));
+  };
+
+  // Handler for clearing all old guests & bookings data
+  const handleClearAllData = () => {
+    setBookings([]);
+    setStayGuests([]);
+    setCheckoutGuests([]);
+    localStorage.removeItem('haven_bookings');
+    localStorage.removeItem('haven_stays');
+    localStorage.removeItem('haven_checkouts');
+  };
+
   return (
     <div className="relative">
       {/* Multi-Role Authentication Modal */}
@@ -175,12 +322,21 @@ export default function App() {
             <DiscoverView 
               bookings={bookings}
               currentUser={currentUser}
+              initialOpenMyBookings={autoOpenMyBookings}
               onOpenAuthModal={handleOpenAuthModal}
               onLogout={handleLogout}
               onCancelBooking={handleCancelBooking}
-              onSelectRoom={(room) => setSelectedRoom(room)}
-              onNavigateToBooking={() => setView('booking')}
+              onEarlyCheckOut={handleEarlyCheckOut}
+              onSelectRoom={(room, checkIn, checkOut, nights) => {
+                setAutoOpenMyBookings(false);
+                handleSelectRoomWithSearchDates(room, checkIn, checkOut, nights);
+              }}
+              onNavigateToBooking={() => {
+                setAutoOpenMyBookings(false);
+                setView('booking');
+              }}
               onNavigateToAdmin={handleNavigateToAdmin}
+              onAddSampleBooking={handleAddSampleBooking}
             />
           </motion.div>
         )}
@@ -195,8 +351,14 @@ export default function App() {
             <BookingView 
               selectedRoom={selectedRoom}
               currentUser={currentUser}
+              initialCheckInDate={searchCheckInDate}
+              initialCheckOutDate={searchCheckOutDate}
+              initialNights={searchNights}
               onBookingSuccess={handleBookingSuccess}
-              onNavigateToDiscover={() => setView('discover')}
+              onNavigateToDiscover={() => {
+                setAutoOpenMyBookings(true);
+                setView('discover');
+              }}
               onNavigateToAdmin={handleNavigateToAdmin}
             />
           </motion.div>
@@ -218,6 +380,9 @@ export default function App() {
                 onCheckIn={handleCheckIn}
                 onAddService={handleAddService}
                 onCheckOut={handleCheckOut}
+                onEarlyCheckOut={handleEarlyCheckOut}
+                onDeleteStayGuest={handleDeleteStayGuest}
+                onClearAllData={handleClearAllData}
                 onNavigateToDiscover={() => setView('discover')}
                 onLogout={handleLogout}
               />
