@@ -178,9 +178,9 @@ export default function ReceptionTab({
                       <span className="text-[10px] text-gray-400 block font-medium">{booking.roomType}</span>
                     </div>
 
-                    {booking.status === 'pending' ? (
+                    {(booking.status === 'pending' || booking.status === 'pending_payment') ? (
                       <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-amber-200 animate-pulse">
-                        🟡 Đơn Mới Từ Khách
+                        🟡 Đơn Mới Khách Đặt
                       </span>
                     ) : (
                       <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-emerald-200">
@@ -190,14 +190,14 @@ export default function ReceptionTab({
                   </div>
 
                   <div className="bg-[#f9f9ff] p-2.5 rounded-lg border border-gray-100 text-xs text-[#141b2b] space-y-1">
-                    <p className="font-bold">Khách: {booking.guestName}</p>
+                    <p className="font-bold text-[#003527]">Khách: {booking.guestName}</p>
                     <p className="text-[11px] text-gray-500">SĐT: {booking.phone} • CCCD: {booking.cccd}</p>
                     <p className="text-[11px] text-gray-500">Nhận: {booking.checkInDate} ➔ Trả: {booking.checkOutDate}</p>
                     <p className="text-[11px] font-extrabold text-[#003527]">Tổng: {booking.totalPrice.toLocaleString('vi-VN')}đ ({booking.paymentMethod === 'vnpay' ? 'VNPay' : 'Stripe'})</p>
                   </div>
 
                   <div className="flex gap-2 pt-1">
-                    {booking.status === 'pending' && onConfirmBooking && (
+                    {(booking.status === 'pending' || booking.status === 'pending_payment') && onConfirmBooking && (
                       <button 
                         onClick={() => {
                           onConfirmBooking(booking.id);
@@ -213,7 +213,7 @@ export default function ReceptionTab({
                     <button 
                       onClick={() => setSelectedBookingForCheckIn(booking)}
                       className={`py-2 text-white transition-all rounded-lg font-bold text-xs flex items-center justify-center gap-1 shadow-sm active:scale-98 ${
-                        booking.status === 'pending' ? 'px-3 bg-[#003527] hover:bg-[#064e3b]' : 'w-full bg-[#003527] hover:bg-[#064e3b]'
+                        (booking.status === 'pending' || booking.status === 'pending_payment') ? 'px-3 bg-[#003527] hover:bg-[#064e3b]' : 'w-full bg-[#003527] hover:bg-[#064e3b]'
                       }`}
                     >
                       <FileUp className="w-3.5 h-3.5 text-[#80bea6]" />

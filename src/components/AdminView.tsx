@@ -170,7 +170,7 @@ export default function AdminView({
               {activeTab === 'customers' && 'Quản Lý Khách Hàng'}
               {activeTab === 'services' && 'Quản Lý Dịch Vụ Phụ Trợ'}
             </h2>
-            <p className="text-xs text-[#404944] mt-0.5">HavenStay Property Control Platform</p>
+            <p className="text-xs text-[#404944] mt-0.5">Hidden Gem Property Control Platform</p>
           </div>
 
           <div className="flex items-center gap-4">

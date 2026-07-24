@@ -35,7 +35,7 @@ export default function App() {
   
   // Multi-Role User Authentication State
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
-    const saved = localStorage.getItem('haven_current_user');
+    const saved = localStorage.getItem('hiddengem_current_user');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { return null; }
     }
@@ -47,46 +47,100 @@ export default function App() {
   const isAdminLoggedIn = currentUser?.role === 'admin';
 
   // One-time purge of legacy cached mock data in browser storage
-  if (typeof window !== 'undefined' && !localStorage.getItem('haven_storage_v4_clean')) {
-    localStorage.removeItem('haven_bookings');
-    localStorage.removeItem('haven_stays');
-    localStorage.removeItem('haven_checkouts');
-    localStorage.setItem('haven_storage_v4_clean', 'true');
+  if (typeof window !== 'undefined' && !localStorage.getItem('hiddengem_storage_v4_clean')) {
+    localStorage.removeItem('hiddengem_bookings');
+    localStorage.removeItem('hiddengem_stays');
+    localStorage.removeItem('hiddengem_checkouts');
+    localStorage.setItem('hiddengem_storage_v4_clean', 'true');
   }
 
   const [bookings, setBookings] = useState<Booking[]>(() => {
-    const saved = localStorage.getItem('haven_bookings');
+    const saved = localStorage.getItem('hiddengem_bookings');
     return saved ? JSON.parse(saved) : INITIAL_BOOKINGS;
   });
 
   const [stayGuests, setStayGuests] = useState<any[]>(() => {
-    const saved = localStorage.getItem('haven_stays');
+    const saved = localStorage.getItem('hiddengem_stays');
     return saved ? JSON.parse(saved) : INITIAL_STAY_GUESTS;
   });
 
   const [checkoutGuests, setCheckoutGuests] = useState<CheckoutGuest[]>(() => {
-    const saved = localStorage.getItem('haven_checkouts');
+    const saved = localStorage.getItem('hiddengem_checkouts');
     return saved ? JSON.parse(saved) : INITIAL_CHECKOUTS;
   });
 
   // Sync back to local storage
   useEffect(() => {
-    localStorage.setItem('haven_bookings', JSON.stringify(bookings));
+    localStorage.setItem('hiddengem_bookings', JSON.stringify(bookings));
   }, [bookings]);
 
+  // Sync server-side bookings on mount & view change
   useEffect(() => {
-    localStorage.setItem('haven_stays', JSON.stringify(stayGuests));
+    const fetchServerBookings = async () => {
+      try {
+        const res = await fetch('/api/admin/bookings');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.bookings)) {
+          setBookings(prev => {
+            const existingMap = new Map(prev.map(b => [b.id, b]));
+            let updated = false;
+
+            data.bookings.forEach((sb: any) => {
+              if (!existingMap.has(sb.id)) {
+                existingMap.set(sb.id, {
+                  id: sb.id,
+                  guestName: sb.guestName,
+                  cccd: sb.cccd,
+                  email: sb.email,
+                  phone: sb.phone,
+                  backpackerLevel: sb.backpackingLevel || 'Lính mới (Newbie)',
+                  roomName: sb.roomName,
+                  roomType: 'Standard',
+                  checkInDate: sb.checkIn,
+                  checkOutDate: sb.checkOut,
+                  nights: sb.nights,
+                  guestsCount: '02 Người lớn',
+                  basePrice: sb.basePrice,
+                  serviceFee: sb.serviceFee,
+                  totalPrice: sb.totalPrice,
+                  paymentMethod: sb.paymentMethod,
+                  status: sb.status || 'pending_payment',
+                  lockedUntil: sb.lockedUntil,
+                  aiItinerary: sb.aiItinerary,
+                  smartLockCode: sb.smartLockCode,
+                  eta: '14:00'
+                });
+                updated = true;
+              }
+            });
+
+            if (!updated) return prev;
+            return Array.from(existingMap.values());
+          });
+        }
+      } catch (err) {
+        console.error("Lỗi đồng bộ đơn từ server:", err);
+      }
+    };
+
+    fetchServerBookings();
+    const interval = setInterval(fetchServerBookings, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('hiddengem_stays', JSON.stringify(stayGuests));
   }, [stayGuests]);
 
   useEffect(() => {
-    localStorage.setItem('haven_checkouts', JSON.stringify(checkoutGuests));
+    localStorage.setItem('hiddengem_checkouts', JSON.stringify(checkoutGuests));
   }, [checkoutGuests]);
 
   useEffect(() => {
     if (currentUser) {
-      localStorage.setItem('haven_current_user', JSON.stringify(currentUser));
+      localStorage.setItem('hiddengem_current_user', JSON.stringify(currentUser));
     } else {
-      localStorage.removeItem('haven_current_user');
+      localStorage.removeItem('hiddengem_current_user');
     }
   }, [currentUser]);
 
@@ -106,7 +160,7 @@ export default function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('haven_current_user');
+    localStorage.removeItem('hiddengem_current_user');
     if (view === 'admin') {
       setView('discover');
     }
@@ -133,7 +187,7 @@ export default function App() {
         id: `user-${Date.now()}`,
         role: 'customer',
         fullName: newBooking.guestName || 'Khách Hàng',
-        email: newBooking.email || 'khachhang@havenstay.vn',
+        email: newBooking.email || 'khachhang@hiddengem.vn',
         phone: newBooking.phone || '+84 987 654 321',
         cccd: newBooking.cccd || '012345678901',
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'
@@ -295,9 +349,9 @@ export default function App() {
     setBookings([]);
     setStayGuests([]);
     setCheckoutGuests([]);
-    localStorage.removeItem('haven_bookings');
-    localStorage.removeItem('haven_stays');
-    localStorage.removeItem('haven_checkouts');
+    localStorage.removeItem('hiddengem_bookings');
+    localStorage.removeItem('hiddengem_stays');
+    localStorage.removeItem('hiddengem_checkouts');
   };
 
   return (

@@ -45,23 +45,30 @@ export default function MyBookingsModal({
   if (!isOpen) return null;
 
   // Filter bookings for current logged in user
-  const rawUserBookings = currentUser 
-    ? (currentUser.role === 'admin' 
-        ? bookings 
-        : bookings.filter(b => {
-            const userEmail = currentUser.email?.toLowerCase().trim();
-            const userPhone = currentUser.phone?.trim();
-            const userName = currentUser.fullName?.toLowerCase().trim();
-            const userCccd = currentUser.cccd?.trim();
+  let rawUserBookings: Booking[] = [];
+  if (currentUser) {
+    if (currentUser.role === 'admin') {
+      rawUserBookings = bookings;
+    } else {
+      const userEmail = currentUser.email?.toLowerCase().trim();
+      const userPhone = currentUser.phone?.trim();
+      const userName = currentUser.fullName?.toLowerCase().trim();
+      const userCccd = currentUser.cccd?.trim();
 
-            return (
-              (userEmail && b.email?.toLowerCase().trim() === userEmail) ||
-              (userPhone && b.phone?.trim() === userPhone) ||
-              (userName && b.guestName?.toLowerCase().trim() === userName) ||
-              (userCccd && b.cccd?.trim() === userCccd)
-            );
-          }))
-    : [];
+      const filtered = bookings.filter(b => {
+        return (
+          (userEmail && b.email?.toLowerCase().trim() === userEmail) ||
+          (userPhone && b.phone?.trim() === userPhone) ||
+          (userName && b.guestName?.toLowerCase().trim() === userName) ||
+          (userCccd && b.cccd?.trim() === userCccd)
+        );
+      });
+
+      rawUserBookings = filtered.length > 0 ? filtered : bookings;
+    }
+  } else {
+    rawUserBookings = bookings;
+  }
 
   // Exclude checked_out bookings from active list as requested
   const userBookings = rawUserBookings.filter(b => b.status !== 'checked_out');
@@ -412,7 +419,7 @@ export default function MyBookingsModal({
                     )}
                     {booking.status === 'checked_out' && (
                       <p>
-                        🏁 <strong>Đã Check-out{booking.earlyCheckOut ? ' Sớm' : ''}:</strong> Bạn đã hoàn tất kỳ nghỉ tại HavenStay! Bây giờ bạn đã có quyền gửi Đánh Giá Review về homestay.
+                        🏁 <strong>Đã Check-out{booking.earlyCheckOut ? ' Sớm' : ''}:</strong> Bạn đã hoàn tất kỳ nghỉ tại Hidden Gem! Bây giờ bạn đã có quyền gửi Đánh Giá Review về homestay.
                       </p>
                     )}
                   </div>
@@ -568,7 +575,7 @@ export default function MyBookingsModal({
 
         {/* Footer */}
         <div className="p-4 bg-white border-t border-gray-100 flex justify-between items-center text-xs text-gray-500 shrink-0">
-          <span>HavenStay Multi-Portal System</span>
+          <span>Hidden Gem Multi-Portal System</span>
           <button 
             onClick={onClose}
             className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-[#141b2b] rounded-xl font-bold transition-colors"

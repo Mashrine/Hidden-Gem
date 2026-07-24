@@ -28,7 +28,7 @@ export default function BookingView({
   // Booking details state
   const [fullName, setFullName] = useState<string>(currentUser?.fullName || 'Nguyễn Văn A');
   const [cccd, setCccd] = useState<string>(currentUser?.cccd || '012345678901');
-  const [email, setEmail] = useState<string>(currentUser?.email || 'example@havenstay.vn');
+  const [email, setEmail] = useState<string>(currentUser?.email || 'example@hiddengem.vn');
   const [phone, setPhone] = useState<string>(currentUser?.phone || '+84 987 654 321');
   const [backpackerLevel, setBackpackerLevel] = useState<string>('Lính mới (Newbie) - Thích nghỉ dưỡng nhẹ nhàng');
   const [paymentMethod, setPaymentMethod] = useState<'vnpay' | 'stripe'>('vnpay');
@@ -272,7 +272,8 @@ export default function BookingView({
         body: JSON.stringify({
           roomId: selectedRoom.id,
           checkIn: checkInDate,
-          checkOut: checkOutDate
+          checkOut: checkOutDate,
+          sessionId: sessionIdRef.current
         })
       });
       const availData = await availRes.json();
@@ -705,7 +706,7 @@ export default function BookingView({
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="example@havenstay.vn"
+                      placeholder="example@hiddengem.vn"
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#003527] focus:ring-1 focus:ring-[#003527] outline-none transition-all bg-[#f1f3ff] text-sm text-[#141b2b]"
                     />
                   </div>
@@ -926,7 +927,7 @@ export default function BookingView({
                   </button>
 
                   <p className="text-center text-[10px] text-gray-400">
-                    Bằng cách nhấp vào nút này, bạn đồng ý với <a className="underline text-[#9b4500]" href="#">Điều khoản dịch vụ</a> của HavenStay.
+                    Bằng cách nhấp vào nút này, bạn đồng ý với <a className="underline text-[#9b4500]" href="#">Điều khoản dịch vụ</a> của Hidden Gem.
                   </p>
                 </div>
               </div>
@@ -988,7 +989,7 @@ export default function BookingView({
               <div className="bg-slate-50 border-b border-gray-200 p-4 px-6 text-xs text-slate-600 space-y-1.5">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-slate-500">Người gửi:</span>
-                  <span className="font-bold text-slate-800">HavenStay System &lt;bookings@havenstay.vn&gt;</span>
+                  <span className="font-bold text-slate-800">Hidden Gem System &lt;bookings@hiddengem.vn&gt;</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-slate-500">Người nhận:</span>
@@ -997,7 +998,7 @@ export default function BookingView({
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-slate-500">Tiêu đề:</span>
                   <span className="font-black text-[#9b4500]">
-                    [HavenStay] Xác Nhận Đặt Phòng Thành Công - Mã đơn #{lastCreatedBooking?.id || `booking-${Date.now()}`}
+                    [Hidden Gem] Xác Nhận Đặt Phòng Thành Công - Mã đơn #{lastCreatedBooking?.id || `booking-${Date.now()}`}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-[10px] text-slate-400 pt-1">
@@ -1011,9 +1012,9 @@ export default function BookingView({
                 {/* Brand Header */}
                 <div className="text-center pb-6 border-b border-gray-100">
                   <div className="inline-block px-4 py-2 rounded-2xl bg-[#003527] text-white mb-2">
-                    <h2 className="text-2xl font-black tracking-tight">Haven<span className="text-[#ffdbca]">Stay</span></h2>
+                    <h2 className="text-2xl font-black tracking-tight">Hidden<span className="text-[#ffdbca]"> Gem</span></h2>
                   </div>
-                  <p className="text-xs text-slate-500 font-medium">Khu Nghỉ Dưỡng & Homestay Trải Nghiệm HavenStay</p>
+                  <p className="text-xs text-slate-500 font-medium">Khu Nghỉ Dưỡng & Homestay Trải Nghiệm Hidden Gem</p>
                 </div>
 
                 {/* Greeting */}
@@ -1022,7 +1023,7 @@ export default function BookingView({
                     Kính gửi quý khách {fullName},
                   </h4>
                   <p className="text-slate-600 leading-relaxed text-xs">
-                    Cảm ơn quý khách đã tin tưởng dịch vụ nghỉ dưỡng của <strong>HavenStay</strong>. Chúng tôi xin xác nhận yêu cầu đặt phòng và giao dịch thanh toán của quý khách đã thành công!
+                    Cảm ơn quý khách đã tin tưởng dịch vụ nghỉ dưỡng của <strong>Hidden Gem</strong>. Chúng tôi xin xác nhận yêu cầu đặt phòng và giao dịch thanh toán của quý khách đã thành công!
                   </p>
                 </div>
 
@@ -1083,7 +1084,7 @@ export default function BookingView({
                 </div>
 
                 <p className="text-xs text-slate-500 italic text-center pt-2">
-                  Trân trọng cảm ơn quý khách và chúc quý khách có một kỳ nghỉ thật tuyệt vời tại HavenStay!
+                  Trân trọng cảm ơn quý khách và chúc quý khách có một kỳ nghỉ thật tuyệt vời tại Hidden Gem!
                 </p>
               </div>
 

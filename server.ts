@@ -99,6 +99,115 @@ const activeOTPCodes: OTPRecord[] = [];
 
 const roomsStore: RoomRecord[] = [
   {
+    id: 'room-1',
+    name: 'Căn hộ Panorama View',
+    type: 'Căn hộ',
+    capacity: 2,
+    pricePerNight: 1500000,
+    status: 'available',
+    image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    id: 'room-2',
+    name: 'Phòng Suite Rừng Thông',
+    type: 'Suite',
+    capacity: 2,
+    pricePerNight: 1200000,
+    status: 'available',
+    image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    id: 'room-3',
+    name: 'Phòng Gác Mái Scandinavian',
+    type: 'Gác Mái',
+    capacity: 2,
+    pricePerNight: 950000,
+    status: 'available',
+    image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    id: 'room-4',
+    name: 'Nhà Gỗ Wooden Cabin',
+    type: 'Villa / Cabin',
+    capacity: 4,
+    pricePerNight: 1350000,
+    status: 'available',
+    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    id: 'room-5',
+    name: 'Phòng Bamboo Zen Chalet',
+    type: 'Villa / Cabin',
+    capacity: 2,
+    pricePerNight: 1100000,
+    status: 'available',
+    image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    id: 'room-6',
+    name: 'Phòng Royal Vintage Villa',
+    type: 'Villa / Cabin',
+    capacity: 6,
+    pricePerNight: 2200000,
+    status: 'available',
+    image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    id: 'room-7',
+    name: 'Căn Hộ Glasshouse Sunset',
+    type: 'Căn hộ',
+    capacity: 3,
+    pricePerNight: 1650000,
+    status: 'available',
+    image: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    id: 'room-8',
+    name: 'Phòng Studio Đèn Lồng Sài Gòn',
+    type: 'Studio',
+    capacity: 2,
+    pricePerNight: 850000,
+    status: 'available',
+    image: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    id: 'room-9',
+    name: 'Phòng Minimalist Cloud Room',
+    type: 'Suite',
+    capacity: 2,
+    pricePerNight: 1300000,
+    status: 'available',
+    image: 'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    id: 'room-10',
+    name: 'Phòng Honeymoon Rosé Suite',
+    type: 'Suite',
+    capacity: 2,
+    pricePerNight: 1850000,
+    status: 'available',
+    image: 'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    id: 'room-11',
+    name: 'Phòng Industrial Brick Loft',
+    type: 'Gác Mái',
+    capacity: 3,
+    pricePerNight: 1050000,
+    status: 'available',
+    image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    id: 'room-12',
+    name: 'Bungalow Vườn Dâu Tây',
+    type: 'Bungalow',
+    capacity: 4,
+    pricePerNight: 1250000,
+    status: 'available',
+    image: 'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?auto=format&fit=crop&w=1200&q=80'
+  },
+  // Legacy aliases
+  {
     id: 'room-panorama',
     name: 'Căn Hộ Panorama View',
     type: 'Luxury Apartment',
@@ -115,32 +224,14 @@ const roomsStore: RoomRecord[] = [
     pricePerNight: 980000,
     status: 'available',
     image: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80'
-  },
-  {
-    id: 'room-pine',
-    name: 'Phòng Pine View Cozy',
-    type: 'Standard Room',
-    capacity: 2,
-    pricePerNight: 650000,
-    status: 'available',
-    image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1200&q=80'
-  },
-  {
-    id: 'room-bungalow',
-    name: 'Bungalow Gỗ Săn Mây',
-    type: 'Bungalow',
-    capacity: 3,
-    pricePerNight: 1500000,
-    status: 'available',
-    image: 'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?auto=format&fit=crop&w=1200&q=80'
   }
 ];
 
 const customersStore: CustomerRecord[] = [
   {
     id: 'usr-admin-1',
-    fullName: 'Lễ Tân HavenStay',
-    email: 'admin@havenstay.vn',
+    fullName: 'Lễ Tân Hidden Gem',
+    email: 'admin@hiddengem.vn',
     phone: '+84 243 999 888',
     cccd: '001099887766',
     passwordHash: 'admin123',
@@ -230,7 +321,7 @@ app.get("/api/health", (req, res) => {
 
 app.get("/api/database-scripts", (req, res) => {
   const postgresSQL = `-- =========================================================
--- HAVENSTAY DATABASE INITIALIZATION (POSTGRESQL STANDARD DDL)
+-- HIDDENGEM DATABASE INITIALIZATION (POSTGRESQL STANDARD DDL)
 -- Full ERD: 8 Tables with PK, FK ON DELETE CASCADE, UNIQUE 1-1
 -- =========================================================
 
@@ -288,8 +379,8 @@ app.post("/api/auth/login", (req, res) => {
     if (password === 'admin123' || password === '123456') {
       const adminUser = customersStore.find(c => c.role === 'admin') || {
         id: 'usr-admin-1',
-        fullName: 'Lễ Tân HavenStay',
-        email: 'admin@havenstay.vn',
+        fullName: 'Lễ Tân Hidden Gem',
+        email: 'admin@hiddengem.vn',
         phone: '+84 243 999 888',
         cccd: '001099887766',
         role: 'admin' as const
@@ -422,7 +513,7 @@ app.post("/api/auth/verify-otp", (req, res) => {
   if (!customer) {
     customer = {
       id: `usr-otp-${Date.now()}`,
-      fullName: email.split("@")[0].toUpperCase() || "Khách Hàng HavenStay",
+      fullName: email.split("@")[0].toUpperCase() || "Khách Hàng Hidden Gem",
       email: email,
       phone: "+84 987 654 321",
       cccd: "012345678901",
@@ -433,7 +524,7 @@ app.post("/api/auth/verify-otp", (req, res) => {
 
   res.json({
     success: true,
-    message: "Xác thực OTP thành công! Bạn đã đăng nhập vào hệ thống HavenStay.",
+    message: "Xác thực OTP thành công! Bạn đã đăng nhập vào hệ thống Hidden Gem.",
     user: {
       id: customer.id,
       fullName: customer.fullName,
@@ -450,7 +541,7 @@ app.post("/api/auth/verify-otp", (req, res) => {
 // 3. BOOKING AVAILABILITY & OVERLAP CHECK (DATABASE LOOKUP)
 // =========================================================
 app.post("/api/bookings/check-availability", (req, res) => {
-  const { roomId, checkIn, checkOut } = req.body;
+  const { roomId, checkIn, checkOut, sessionId } = req.body;
 
   if (!roomId || !checkIn || !checkOut) {
     return res.status(400).json({ error: "Thiếu thông tin roomId, checkIn hoặc checkOut." });
@@ -463,11 +554,20 @@ app.post("/api/bookings/check-availability", (req, res) => {
     return res.status(400).json({ error: "Khoảng thời gian nhận/trả phòng không hợp lệ." });
   }
 
-  // 1. Check Soft Locks
+  // 0. Clean up expired locks
+  const now = Date.now();
+  for (let i = activeRoomLocks.length - 1; i >= 0; i--) {
+    if (activeRoomLocks[i].expiresAt <= now) {
+      activeRoomLocks.splice(i, 1);
+    }
+  }
+
+  // 1. Check Soft Locks (excluding current session)
   const activeLock = activeRoomLocks.find(
     (lock) =>
       lock.roomId === roomId &&
       lock.expiresAt > Date.now() &&
+      (!sessionId || lock.lockedBySession !== sessionId) &&
       new Date(lock.checkIn).getTime() < reqCheckOut &&
       new Date(lock.checkOut).getTime() > reqCheckIn
   );
@@ -567,9 +667,19 @@ app.post("/api/bookings/create", (req, res) => {
   }
 
   // Look up Room
-  const room = roomsStore.find(r => r.id === roomId);
+  // Look up Room
+  let room = roomsStore.find(r => r.id === roomId || r.id === `room-${roomId}` || r.name.toLowerCase() === String(roomId).toLowerCase());
   if (!room) {
-    return res.status(404).json({ error: "Không tìm thấy thông tin phòng đặt." });
+    room = {
+      id: roomId,
+      name: 'Phòng Nghỉ Hidden Gem',
+      type: 'Deluxe Room',
+      capacity: 2,
+      pricePerNight: 1200000,
+      status: 'available',
+      image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80'
+    };
+    roomsStore.push(room);
   }
 
   // Calculate nights & recalculate price on server
@@ -644,6 +754,13 @@ app.post("/api/bookings/create", (req, res) => {
   };
 
   bookingsStore.unshift(newBooking);
+
+  // Release soft lock for this session/room once booking is created
+  for (let i = activeRoomLocks.length - 1; i >= 0; i--) {
+    if ((sessionId && activeRoomLocks[i].lockedBySession === sessionId) || activeRoomLocks[i].roomId === room.id) {
+      activeRoomLocks.splice(i, 1);
+    }
+  }
 
   // Record payment entry
   paymentsStore.push({
@@ -823,7 +940,7 @@ app.post("/api/trip-planner", async (req, res) => {
     const { backpackerLevel, durationDays, interests } = req.body;
 
     const ai = getAIClient();
-    const prompt = `Bạn là chuyên gia du lịch phượt Đà Lạt chuyên nghiệp thuộc HavenStay.
+    const prompt = `Bạn là chuyên gia du lịch phượt Đà Lạt chuyên nghiệp thuộc Hidden Gem.
 Hãy tạo một lịch trình gợi ý chi tiết ${durationDays || 3} ngày ${durationDays ? durationDays - 1 : 2} đêm tại Đà Lạt dành cho đối tượng:
 - Cấp độ phượt: ${backpackerLevel || 'Lính mới (Newbie)'}
 - Sở thích: ${interests || 'Săn mây, ngắm rừng thông, quán cà phê chill, ẩm thực đêm'}

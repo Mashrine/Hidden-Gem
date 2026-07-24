@@ -229,8 +229,8 @@ export default function AuthModal({
       ) {
         const adminUser: UserAccount = {
           id: `admin-1`,
-          fullName: 'Lễ Tân HavenStay',
-          email: 'admin@havenstay.vn',
+          fullName: 'Lễ Tân Hidden Gem',
+          email: 'admin@hiddengem.vn',
           phone: '+84 243 999 888',
           cccd: '001099887766',
           role: 'admin',
@@ -265,7 +265,7 @@ export default function AuthModal({
     const adminUser: UserAccount = {
       id: `admin-demo`,
       fullName: 'Quản Lý Lễ Tân Admin',
-      email: 'admin@havenstay.vn',
+      email: 'admin@hiddengem.vn',
       phone: '+84 243 999 888',
       cccd: '001099887766',
       role: 'admin',
@@ -676,7 +676,7 @@ export default function AuthModal({
 
         {/* Modal Footer */}
         <div className="bg-gray-50 px-6 py-3 border-t border-gray-100 text-[11px] text-gray-500 text-center flex justify-between items-center">
-          <span>Hệ thống phân quyền HavenStay v2.0</span>
+          <span>Hệ thống phân quyền Hidden Gem v2.0</span>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-800 font-bold underline"

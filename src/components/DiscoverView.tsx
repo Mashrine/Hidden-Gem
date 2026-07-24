@@ -36,7 +36,7 @@ export default function DiscoverView({
   onNavigateToAdmin,
   onAddSampleBooking
 }: DiscoverViewProps) {
-  const [selectedPin, setSelectedPin] = useState<string | null>('haven');
+  const [selectedPin, setSelectedPin] = useState<string | null>('hiddengem');
 
   const todayStr = new Date().toISOString().split('T')[0];
   const tomorrowStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
@@ -232,22 +232,33 @@ export default function DiscoverView({
             >
               <Building2 className="w-4 h-4 text-[#80bea6]" />
               <span className="hidden sm:inline">Phòng Đã Đặt Của Tôi</span>
-              {currentUser && (() => {
-                const activeCount = currentUser.role === 'admin' 
-                  ? bookings.filter(b => b.status !== 'checked_out').length
-                  : bookings.filter(b => {
+              {(() => {
+                let activeCount = 0;
+                if (currentUser) {
+                  if (currentUser.role === 'admin') {
+                    activeCount = bookings.filter(b => b.status !== 'checked_out').length;
+                  } else {
+                    const userEmail = currentUser.email?.toLowerCase().trim();
+                    const userPhone = currentUser.phone?.trim();
+                    const userName = currentUser.fullName?.toLowerCase().trim();
+                    const userCccd = currentUser.cccd?.trim();
+                    const matched = bookings.filter(b => {
                       if (b.status === 'checked_out') return false;
-                      const userEmail = currentUser.email?.toLowerCase().trim();
-                      const userPhone = currentUser.phone?.trim();
-                      const userName = currentUser.fullName?.toLowerCase().trim();
-                      const userCccd = currentUser.cccd?.trim();
                       return (
                         (userEmail && b.email?.toLowerCase().trim() === userEmail) ||
                         (userPhone && b.phone?.trim() === userPhone) ||
                         (userName && b.guestName?.toLowerCase().trim() === userName) ||
                         (userCccd && b.cccd?.trim() === userCccd)
                       );
-                    }).length;
+                    });
+                    activeCount = matched.length > 0 
+                      ? matched.length 
+                      : bookings.filter(b => b.status !== 'checked_out').length;
+                  }
+                } else {
+                  activeCount = bookings.filter(b => b.status !== 'checked_out').length;
+                }
+
                 return activeCount > 0 ? (
                   <span className="bg-[#fd8a42] text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
                     {activeCount}
@@ -320,19 +331,19 @@ export default function DiscoverView({
 
           {/* Map Interactive Pins Overlay */}
           <div className="absolute inset-0 z-10 pointer-events-none">
-            {/* Main Pin (HavenStay) */}
+            {/* Main Pin (Hidden Gem) */}
             <div 
               style={{ top: '48%', left: '49%' }}
               className="absolute pointer-events-auto cursor-pointer flex flex-col items-center"
-              onClick={() => setSelectedPin('haven')}
+              onClick={() => setSelectedPin('hiddengem')}
             >
               <div className="relative group flex flex-col items-center">
                 <img 
-                  alt="HavenStay Main Pin" 
-                  className={`w-16 h-16 md:w-22 md:h-22 drop-shadow-2xl transition-transform duration-300 ${selectedPin === 'haven' ? 'scale-110 animate-bounce' : 'hover:scale-105'}`}
+                  alt="Hidden Gem Main Pin" 
+                  className={`w-16 h-16 md:w-22 md:h-22 drop-shadow-2xl transition-transform duration-300 ${selectedPin === 'hiddengem' ? 'scale-110 animate-bounce' : 'hover:scale-105'}`}
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5TkQg2R1P6GA782Sa-hqrk50MZrVwOXHjrXPGCGFrSSIhr1zu2lggfRqO8D9bh_u8e1BN5Gq3-q5i7sruBbj4aG7mSAPyVY-aNBCCGupEQ172dre8Lw9EbAgzbbq1MZ9psRQWmHVjM25knGyix6i86RntQ29dKmI8z9FuKgycs0K-MhgCwnwKE71YJdt91eCkJfSGaEs49Ntc_aa3nbvTNr2UNraKkt9CUfuDL3sfzKzxXopnPDEuJvQkf_5UoiS-fMc2giHUaA" 
                 />
-                <div className={`mt-1 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-lg border border-gray-200 text-xs font-bold text-[#003527] transition-all duration-300 ${selectedPin === 'haven' ? 'opacity-100 scale-100' : 'opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100'}`}>
+                <div className={`mt-1 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-lg border border-gray-200 text-xs font-bold text-[#003527] transition-all duration-300 ${selectedPin === 'hiddengem' ? 'opacity-100 scale-100' : 'opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100'}`}>
                   Căn hộ Panorama View
                 </div>
               </div>
@@ -399,13 +410,13 @@ export default function DiscoverView({
               <div className="bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-xl border border-gray-100 pointer-events-auto animate-in fade-in duration-300">
                 <h4 className="text-[#003527] font-bold text-sm mb-1 flex items-center gap-1.5">
                   <Compass className="w-4 h-4 text-[#9b4500]" />
-                  {selectedPin === 'haven' && 'HavenStay Resort - Da Lat'}
+                  {selectedPin === 'hiddengem' && 'Hidden Gem Resort - Da Lat'}
                   {selectedPin === 'datanla' && 'Thác Datanla'}
                   {selectedPin === 'tuyenlam' && 'Khu du lịch Hồ Tuyền Lâm'}
                   {selectedPin === 'vuonhoa' && 'Vườn Hoa Thành Phố'}
                 </h4>
                 <p className="text-xs text-[#404944] leading-relaxed">
-                  {selectedPin === 'haven' && 'Nằm thoai thoải trên ngọn đồi thông thơ mộng với tầm nhìn panorama ngắm toàn cảnh thung lũng sương mây tuyệt đẹp.'}
+                  {selectedPin === 'hiddengem' && 'Nằm thoai thoải trên ngọn đồi thông thơ mộng với tầm nhìn panorama ngắm toàn cảnh thung lũng sương mây tuyệt đẹp.'}
                   {selectedPin === 'datanla' && 'Khu du lịch thác nước tuyệt đẹp với trò chơi máng trượt xuyên rừng thông hấp dẫn và trải nghiệm mạo hiểm.'}
                   {selectedPin === 'tuyenlam' && 'Hồ nước ngọt nhân tạo lớn nhất Đà Lạt, được bao bọc bởi rừng thông ba lá xanh mướt, tĩnh lặng và thanh bình.'}
                   {selectedPin === 'vuonhoa' && 'Nơi quy tụ hàng trăm loài hoa khoe sắc rực rỡ quanh năm, là điểm check-in không thể bỏ qua tại trung tâm Đà Lạt.'}
@@ -747,8 +758,8 @@ export default function DiscoverView({
       <footer className="w-full py-10 bg-[#edf0ff] border-t border-gray-200 mt-12 text-[#141b2b]">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex flex-col items-center md:items-start gap-1">
-            <span className="text-xl font-black text-[#003527] tracking-tighter">HavenStay</span>
-            <p className="text-xs text-[#404944]">© 2024 HavenStay. Bảo lưu mọi quyền.</p>
+            <span className="text-xl font-black text-[#003527] tracking-tighter">Hidden Gem</span>
+            <p className="text-xs text-[#404944]">© 2024 Hidden Gem. Bảo lưu mọi quyền.</p>
           </div>
           <div className="flex flex-wrap justify-center gap-6 text-xs text-[#404944]">
             <a className="hover:text-[#9b4500] transition-colors" href="#">Chính sách Bảo mật</a>

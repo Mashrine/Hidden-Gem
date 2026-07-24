@@ -35,7 +35,7 @@ export default function DBSchemaModal({ isOpen, onClose }: DBSchemaModalProps) {
 
   const handleDownload = () => {
     const textToDownload = activeTab === 'sql' ? sqlContent : dbmlContent;
-    const filename = activeTab === 'sql' ? 'havenstay_schema.sql' : 'havenstay_schema.dbml';
+    const filename = activeTab === 'sql' ? 'hiddengem_schema.sql' : 'hiddengem_schema.dbml';
     const blob = new Blob([textToDownload], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -58,7 +58,7 @@ export default function DBSchemaModal({ isOpen, onClose }: DBSchemaModalProps) {
             </div>
             <div>
               <h3 className="text-base font-bold text-white flex items-center gap-2">
-                Sơ Đồ Cơ Sở Dữ Liệu 8 Bảng (HavenStay DB)
+                Sơ Đồ Cơ Sở Dữ Liệu 8 Bảng (Hidden Gem DB)
                 <span className="bg-[#80bea6]/20 text-[#80bea6] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border border-[#80bea6]/30">
                   PostgreSQL & DBML
                 </span>
@@ -130,7 +130,7 @@ export default function DBSchemaModal({ isOpen, onClose }: DBSchemaModalProps) {
               ? '💡 Chạy câu lệnh SQL này trong pgAdmin, DBeaver hoặc PostgreSQL CLI để khởi tạo 8 bảng chuẩn.'
               : '💡 Dán toàn bộ mã DBML này vào https://dbdiagram.io để tự động vẽ sơ đồ ERD trực quan.'}
           </span>
-          <span className="font-bold text-[#80bea6]">HavenStay DB Engine v1.0</span>
+          <span className="font-bold text-[#80bea6]">Hidden Gem DB Engine v1.0</span>
         </div>
       </div>
     </div>

@@ -825,58 +825,108 @@ export default function RoomManagementTab({
 
           {/* Rooms Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAllRooms.map((room) => (
-              <div 
-                key={room.id}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between"
-              >
-                <div>
-                  <div className="relative h-44 overflow-hidden">
-                    <img 
-                      src={room.image} 
-                      alt={room.name} 
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                    <span className="absolute top-3 right-3 bg-emerald-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-md flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> Sẵn sàng
-                    </span>
-                    <span className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-0.5 rounded-md">
-                      {room.roomType}
-                    </span>
-                  </div>
+            {filteredAllRooms.map((room) => {
+              const roomBookings = bookings.filter(b => 
+                b.status !== 'cancelled' && 
+                (b.roomName.toLowerCase().includes(room.name.toLowerCase()) || room.name.toLowerCase().includes(b.roomName.toLowerCase()))
+              );
+              const activeStay = stayGuests.find(sg => 
+                sg.roomNumber && (sg.roomNumber.toLowerCase().includes(room.name.toLowerCase()) || room.name.toLowerCase().includes(sg.roomNumber.toLowerCase()))
+              );
+              const latestActiveBooking = roomBookings.find(b => b.status === 'checked_in' || b.status === 'confirmed' || b.status === 'pending_payment' || b.status === 'pending') || roomBookings[0];
 
-                  <div className="p-4 space-y-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-extrabold text-base text-[#141b2b]">{room.name}</h4>
-                        <p className="text-xs text-gray-400 font-medium">{room.location}</p>
+              return (
+                <div 
+                  key={room.id}
+                  className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="relative h-44 overflow-hidden">
+                      <img 
+                        src={room.image} 
+                        alt={room.name} 
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                      
+                      <div className="absolute top-3 right-3">
+                        {activeStay || latestActiveBooking?.status === 'checked_in' ? (
+                          <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-md flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> Đang ở (Checked-in)
+                          </span>
+                        ) : (latestActiveBooking?.status === 'pending' || latestActiveBooking?.status === 'pending_payment') ? (
+                          <span className="bg-amber-600 text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-md flex items-center gap-1 animate-bounce">
+                            🟡 Chờ Lễ Tân Xác Nhận
+                          </span>
+                        ) : latestActiveBooking?.status === 'confirmed' ? (
+                          <span className="bg-blue-600 text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-md flex items-center gap-1">
+                            🔵 Đã Đặt Trước
+                          </span>
+                        ) : (
+                          <span className="bg-emerald-600 text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-md flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> Trống Sẵn sàng
+                          </span>
+                        )}
+                      </div>
+
+                      <span className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-0.5 rounded-md">
+                        {room.roomType}
+                      </span>
+                    </div>
+
+                    <div className="p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-extrabold text-base text-[#141b2b]">{room.name}</h4>
+                          <p className="text-xs text-gray-400 font-medium">{room.location}</p>
+                        </div>
+                      </div>
+
+                      {/* Active / Pending Guest Booking Banner */}
+                      {latestActiveBooking && (
+                        <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs space-y-1">
+                          <div className="flex justify-between items-center font-extrabold text-[#9b4500]">
+                            <span>👤 Khách đặt: {latestActiveBooking.guestName}</span>
+                            <span className="text-[9px] bg-[#9b4500] text-white px-2 py-0.5 rounded-full font-black uppercase">
+                              {latestActiveBooking.status === 'checked_in' ? 'Đang ở' : latestActiveBooking.status === 'confirmed' ? 'Đã xác nhận' : 'Chờ Lễ Tân'}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-amber-900 font-medium">
+                            📅 {latestActiveBooking.checkInDate} ➔ {latestActiveBooking.checkOutDate} ({latestActiveBooking.nights} đêm)
+                          </p>
+                          <p className="text-[11px] text-amber-800">
+                            📞 SĐT: {latestActiveBooking.phone} • CCCD: {latestActiveBooking.cccd}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl text-xs">
+                        <span className="text-gray-500 font-medium">Giá 1 đêm:</span>
+                        <span className="font-extrabold text-[#003527]">{room.pricePerNight.toLocaleString('vi-VN')} VNĐ</span>
+                      </div>
+
+                      <div className="flex gap-1.5 flex-wrap">
+                        {room.tags.map((t, i) => (
+                          <span key={i} className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold">
+                            {t}
+                          </span>
+                        ))}
                       </div>
                     </div>
+                  </div>
 
-                    <div className="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl text-xs">
-                      <span className="text-gray-500 font-medium">Giá 1 đêm:</span>
-                      <span className="font-extrabold text-[#003527]">{room.pricePerNight.toLocaleString('vi-VN')} VNĐ</span>
-                    </div>
-
-                    <div className="flex gap-1.5 flex-wrap">
-                      {room.tags.map((t, i) => (
-                        <span key={i} className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold">
-                          {t}
-                        </span>
-                      ))}
-                    </div>
+                  <div className="p-3 bg-gray-50 border-t border-gray-100 flex gap-2">
+                    <button 
+                      onClick={() => setActiveSubMode('occupied_filter')}
+                      className="flex-1 py-2 bg-[#003527] text-white rounded-xl text-xs font-bold hover:bg-[#064e3b] transition-all flex items-center justify-center gap-1"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Xem lịch sử & chi tiết đơn</span>
+                    </button>
                   </div>
                 </div>
-
-                <div className="p-3 bg-gray-50 border-t border-gray-100 flex gap-2">
-                  <button className="flex-1 py-2 bg-[#003527] text-white rounded-xl text-xs font-bold hover:bg-[#064e3b] transition-all flex items-center justify-center gap-1">
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>Quản lý phòng</span>
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
