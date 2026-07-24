@@ -41,6 +41,7 @@ export default function MyBookingsModal({
   const [earlyCheckOutModalBooking, setEarlyCheckOutModalBooking] = useState<Booking | null>(null);
   const [earlyCheckOutNotes, setEarlyCheckOutNotes] = useState<string>('Trả phòng sớm do thay đổi kế hoạch chuyến đi');
   const [showCheckedOutHistory, setShowCheckedOutHistory] = useState<boolean>(false);
+  const [guestLookupQuery, setGuestLookupQuery] = useState<string>('');
 
   if (!isOpen) return null;
 
@@ -55,7 +56,7 @@ export default function MyBookingsModal({
       const userName = currentUser.fullName?.toLowerCase().trim();
       const userCccd = currentUser.cccd?.trim();
 
-      const filtered = bookings.filter(b => {
+      rawUserBookings = bookings.filter(b => {
         return (
           (userEmail && b.email?.toLowerCase().trim() === userEmail) ||
           (userPhone && b.phone?.trim() === userPhone) ||
@@ -63,11 +64,19 @@ export default function MyBookingsModal({
           (userCccd && b.cccd?.trim() === userCccd)
         );
       });
-
-      rawUserBookings = filtered.length > 0 ? filtered : bookings;
     }
   } else {
-    rawUserBookings = bookings;
+    if (guestLookupQuery.trim()) {
+      const q = guestLookupQuery.toLowerCase().trim();
+      rawUserBookings = bookings.filter(b => 
+        b.phone?.trim().includes(q) || 
+        b.email?.toLowerCase().trim().includes(q) || 
+        b.id?.toLowerCase().includes(q) ||
+        b.guestName?.toLowerCase().includes(q)
+      );
+    } else {
+      rawUserBookings = [];
+    }
   }
 
   // Exclude checked_out bookings from active list as requested
@@ -195,25 +204,52 @@ export default function MyBookingsModal({
         {/* Content Body */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-[#f9f9ff]">
           {!currentUser ? (
-            /* Login Gate Prompt */
-            <div className="text-center py-16 space-y-4">
-              <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-600">
-                <LogIn className="w-8 h-8" />
+            /* Login Gate Prompt & Guest Quick Lookup */
+            <div className="py-8 max-w-md mx-auto space-y-6">
+              <div className="text-center space-y-3">
+                <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-600">
+                  <LogIn className="w-8 h-8" />
+                </div>
+                <h3 className="text-lg font-black text-[#141b2b]">Đăng Nhập Hoặc Tra Cứu Đơn</h3>
+                <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
+                  Bạn có thể đăng nhập tài khoản hoặc nhập SĐT / Email / Mã đơn để tra cứu phòng đã đặt.
+                </p>
+                <button 
+                  onClick={() => {
+                    onClose();
+                    if (onOpenAuthModal) onOpenAuthModal('customer');
+                  }}
+                  className="px-6 py-2.5 bg-[#003527] text-white rounded-xl text-xs font-bold hover:bg-[#064e3b] transition-all shadow-md inline-flex items-center gap-2"
+                >
+                  <LogIn className="w-4 h-4 text-[#80bea6]" />
+                  <span>Đăng Nhập Tài Khoản Khách Hàng</span>
+                </button>
               </div>
-              <h3 className="text-lg font-black text-[#141b2b]">Yêu Cầu Đăng Nhập Tài Khoản</h3>
-              <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
-                Bạn cần đăng nhập tài khoản Khách hàng để xem phòng đã đặt và quản lý lịch trình của riêng mình.
-              </p>
-              <button 
-                onClick={() => {
-                  onClose();
-                  if (onOpenAuthModal) onOpenAuthModal('customer');
-                }}
-                className="px-6 py-2.5 bg-[#003527] text-white rounded-xl text-xs font-bold hover:bg-[#064e3b] transition-all shadow-md inline-flex items-center gap-2"
-              >
-                <LogIn className="w-4 h-4 text-[#80bea6]" />
-                <span>Đăng Nhập Khách Hàng Ngay</span>
-              </button>
+
+              <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-gray-200"></div>
+                <span className="shrink-0 mx-4 text-gray-400 text-xs font-bold">HOẶC TRA CỨU NHANH</span>
+                <div className="flex-grow border-t border-gray-200"></div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
+                <label className="text-xs font-bold text-gray-700 block">Nhập SĐT, Email hoặc Mã đơn:</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={guestLookupQuery}
+                    onChange={(e) => setGuestLookupQuery(e.target.value)}
+                    placeholder="VD: 0987654321 hoặc anhaihoai@gmail.com"
+                    className="flex-1 p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-[#003527]"
+                  />
+                </div>
+              </div>
+
+              {guestLookupQuery.trim() && userBookings.length === 0 && (
+                <p className="text-center text-xs text-amber-700 font-medium">
+                  Không tìm thấy đơn đặt nào khớp với thông tin "{guestLookupQuery}"
+                </p>
+              )}
             </div>
           ) : userBookings.length === 0 ? (
             <div className="text-center py-16 space-y-4">

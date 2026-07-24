@@ -57,17 +57,52 @@ export default function DiscoverView({
   // Helper to check room occupancy during selected dates
   const isRoomOccupiedDuringDates = (roomName: string, cin: string, cout: string): boolean => {
     if (!cin || !cout) return false;
-    const searchIn = new Date(cin);
-    const searchOut = new Date(cout);
-    if (isNaN(searchIn.getTime()) || isNaN(searchOut.getTime())) return false;
+
+    const parseDateMs = (dStr: string) => {
+      if (!dStr) return NaN;
+      if (dStr.includes('/')) {
+        const parts = dStr.split('/');
+        if (parts.length === 3) {
+          const d = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10) - 1;
+          const y = parseInt(parts[2], 10);
+          return new Date(y, m, d).getTime();
+        }
+      }
+      const parts = dStr.split('T')[0].split('-');
+      if (parts.length === 3) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        return new Date(y, m, d).getTime();
+      }
+      return new Date(dStr).getTime();
+    };
+
+    const searchIn = parseDateMs(cin);
+    const searchOut = parseDateMs(cout);
+    if (isNaN(searchIn) || isNaN(searchOut) || searchIn >= searchOut) return false;
 
     return bookings.some(b => {
-      if (!b.roomName || !b.roomName.toLowerCase().includes(roomName.toLowerCase())) return false;
+      if (!b.roomName) return false;
+      const rNameLower = roomName.toLowerCase();
+      const bRoomLower = b.roomName.toLowerCase();
+      if (!bRoomLower.includes(rNameLower) && !rNameLower.includes(bRoomLower)) return false;
+
       if (b.status === 'cancelled' || b.status === 'checked_out') return false;
       
-      const bIn = new Date(b.checkInDate);
-      const bOut = b.checkOutDate ? new Date(b.checkOutDate) : new Date(bIn.getTime() + (b.nights || 1) * 86400000);
-      
+      // Check if temporary lock expired for unpaid pending bookings
+      if (b.status === 'pending_payment' && b.lockedUntil) {
+        const lockTime = new Date(b.lockedUntil).getTime();
+        if (!isNaN(lockTime) && lockTime < Date.now()) {
+          return false;
+        }
+      }
+
+      const bIn = parseDateMs(b.checkInDate);
+      const bOut = parseDateMs(b.checkOutDate);
+      if (isNaN(bIn) || isNaN(bOut)) return false;
+
       return searchIn < bOut && searchOut > bIn;
     });
   };
@@ -236,14 +271,14 @@ export default function DiscoverView({
                 let activeCount = 0;
                 if (currentUser) {
                   if (currentUser.role === 'admin') {
-                    activeCount = bookings.filter(b => b.status !== 'checked_out').length;
+                    activeCount = bookings.filter(b => b.status !== 'checked_out' && b.status !== 'cancelled').length;
                   } else {
                     const userEmail = currentUser.email?.toLowerCase().trim();
                     const userPhone = currentUser.phone?.trim();
                     const userName = currentUser.fullName?.toLowerCase().trim();
                     const userCccd = currentUser.cccd?.trim();
                     const matched = bookings.filter(b => {
-                      if (b.status === 'checked_out') return false;
+                      if (b.status === 'checked_out' || b.status === 'cancelled') return false;
                       return (
                         (userEmail && b.email?.toLowerCase().trim() === userEmail) ||
                         (userPhone && b.phone?.trim() === userPhone) ||
@@ -251,12 +286,10 @@ export default function DiscoverView({
                         (userCccd && b.cccd?.trim() === userCccd)
                       );
                     });
-                    activeCount = matched.length > 0 
-                      ? matched.length 
-                      : bookings.filter(b => b.status !== 'checked_out').length;
+                    activeCount = matched.length;
                   }
                 } else {
-                  activeCount = bookings.filter(b => b.status !== 'checked_out').length;
+                  activeCount = 0;
                 }
 
                 return activeCount > 0 ? (
